@@ -1,0 +1,14 @@
+{
+	
+	"plugins":{		
+		"AshWeaponRepoPlugin":"ashlib.data.plugins.AshWeaponRepoPlugin"
+	},
+	"graphics":{
+		"rendering":{
+            "GlitchSquare":"graphics/fx/solid_square.png",
+
+		}
+
+	}
+}
+

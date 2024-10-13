@@ -1,0 +1,4 @@
+Render of ships, weapons and fighters in UI
+Having access to mostly accurate receration of vanilla tooltip that gives info about ship/fighter/weapon
+Access to Reflection
+Replacing AI Core Skills
