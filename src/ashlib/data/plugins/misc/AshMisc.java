@@ -1,6 +1,5 @@
 package ashlib.data.plugins.misc;
 
-import ashlib.data.plugins.reflection.ReflectionUtilis;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.*;
 import com.fs.starfarer.api.campaign.econ.Industry;
@@ -10,6 +9,7 @@ import com.fs.starfarer.api.combat.EngagementResultAPI;
 import com.fs.starfarer.api.combat.ShipHullSpecAPI;
 import com.fs.starfarer.api.combat.ShipVariantAPI;
 import com.fs.starfarer.api.fleet.FleetMemberAPI;
+import com.fs.starfarer.api.fleet.FleetMemberType;
 import com.fs.starfarer.api.impl.campaign.econ.impl.HeavyIndustry;
 import com.fs.starfarer.api.loading.FighterWingSpecAPI;
 import com.fs.starfarer.api.loading.WingRole;
@@ -72,46 +72,19 @@ public class AshMisc {
 
         return map;
     }
-    public static  ButtonAPI tryToGetButtonProd(String name) {
-        ButtonAPI button = null;
-        try {
-            for (UIComponentAPI componentAPI : ReflectionUtilis.getChildrenCopy((UIPanelAPI) getCurrentTab())) {
-                if(componentAPI instanceof  ButtonAPI){
-                    if(((ButtonAPI) componentAPI).getText().toLowerCase().contains(name)){
-                        button = (ButtonAPI) componentAPI;
-                        break;
-                    }
-                }
-            }
-            return button;
-        }
-        catch (Exception e) {
 
-        }
-        return button;
-
-    }
     //Inspired from Officer Extension
-    public static UIPanelAPI getCoreUI() {
-        CampaignUIAPI campaignUI;
-        campaignUI = Global.getSector().getCampaignUI();
-        InteractionDialogAPI dialog = campaignUI.getCurrentInteractionDialog();
+    public static FleetMemberAPI getFleetMemberFromSpec(ShipHullSpecAPI specAPI){
+        CampaignFleetAPI fleet = Global.getFactory().createEmptyFleet(Global.getSector().getPlayerFaction().getId(), "test", false);
 
-        CoreUIAPI core;
-        if (dialog == null) {
-            core = (CoreUIAPI) ReflectionUtilis.invokeMethod("getCore",campaignUI);
-        }
-        else {
-            core = (CoreUIAPI) ReflectionUtilis.invokeMethod( "getCoreUI",dialog);
-        }
-
-        return core == null ? null : (UIPanelAPI) core;
-    }
-
-    public static UIPanelAPI getCurrentTab() {
-        UIPanelAPI coreUltimate = getCoreUI();
-        UIPanelAPI core = (UIPanelAPI) ReflectionUtilis.invokeMethod("getCurrentTab",coreUltimate);
-        return core == null ? null : (UIPanelAPI) core;
+        FleetMemberAPI memberAPI = Global.getFactory().createFleetMember(FleetMemberType.SHIP, Global.getSettings().createEmptyVariant(getVaraint(specAPI),specAPI));
+        fleet.getCargo().addCrew((int) memberAPI.getMinCrew());
+        fleet.getCargo().addSupplies(memberAPI.getCargoCapacity() - 10);
+        fleet.getCargo().addFuel(memberAPI.getFuelCapacity());
+        fleet.getFleetData().addFleetMember(memberAPI);
+        memberAPI.getRepairTracker().setCR(70);
+        memberAPI.getRepairTracker().computeRepairednessFraction();
+        return memberAPI;
     }
 
     public static EngagementResultForFleetAPI getNonPlayerFleet(EngagementResultAPI resultAPI){
