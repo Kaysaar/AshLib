@@ -1,8 +1,8 @@
 {
-    "masterVersionFile":"https://raw.githubusercontent.com/Kaysaar/Ashes-Of-The-Domain-VOK/master/aod_core.version",
+    "masterVersionFile":"https://raw.githubusercontent.com/Kaysaar/AshLib/refs/heads/master/ashlib.version",
     "modName":"Ashlib",
     "directDownloadURL":"https://drive.google.com/uc?export=download&id=1oFzNpFobDxpqrgymwqnvekN4sz6e3_Jx",
-    "modThreadId":26307,
+    "modThreadId":30808,
     "modVersion":
     {
         "major":1,
