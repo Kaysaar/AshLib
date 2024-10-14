@@ -473,8 +473,11 @@ public class ShipInfoGenerator {
             for (Map.Entry<WeaponAPI.WeaponSize, Integer> entry : sizeMap.entrySet()) {
                 amount+=entry.getValue();
             }
-            String countString =  amount + "x";
-            pairs.add(new Pair<String, String>(countString, "Fighter bay"));
+            if(amount!=0){
+                String countString =  amount + "x";
+                pairs.add(new Pair<String, String>(countString, "Fighter bay"));
+            }
+
         }
         else{
             for (Map.Entry<WeaponAPI.WeaponSize, Integer> entry : sizeMap.entrySet()) {
