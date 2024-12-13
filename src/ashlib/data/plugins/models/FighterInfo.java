@@ -1,17 +1,18 @@
 package ashlib.data.plugins.models;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class FighterInfo {
-    HashMap<String, Integer> weaponMap;
+    LinkedHashMap<String, Integer> weaponMap;
     String fighterWingID;
 
-    public FighterInfo(String id, HashMap<String, Integer> weaponMap) {
+    public FighterInfo(String id, LinkedHashMap<String, Integer> weaponMap) {
         this.weaponMap = weaponMap;
         this.fighterWingID = id;
     }
 
-    public HashMap<String, Integer> getWeaponMap() {
+    public LinkedHashMap<String, Integer> getWeaponMap() {
         return weaponMap;
     }
 

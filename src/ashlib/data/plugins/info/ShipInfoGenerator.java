@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static ashlib.data.plugins.misc.AshMisc.getColorForSecondText;
@@ -146,14 +147,14 @@ public class ShipInfoGenerator {
                     break;
             }
         }
-        HashMap<WeaponAPI.WeaponSize, Integer> mapOfSizesEnergy = new HashMap<>();
-        HashMap<WeaponAPI.WeaponSize, Integer> mapOfSizesMissile = new HashMap<>();
-        HashMap<WeaponAPI.WeaponSize, Integer> mapOfSizesBallistic = new HashMap<>();
-        HashMap<WeaponAPI.WeaponSize, Integer> mapOfSizesLaunchBay = new HashMap<>();
-        HashMap<WeaponAPI.WeaponSize, Integer> mapOfSizesUniversal = new HashMap<>();
-        HashMap<WeaponAPI.WeaponSize, Integer> mapOfSizesHybrid = new HashMap<>();
-        HashMap<WeaponAPI.WeaponSize, Integer> mapOfSizesSynergy = new HashMap<>();
-        HashMap<WeaponAPI.WeaponSize, Integer> mapOfSizesComposite = new HashMap<>();
+        LinkedHashMap<WeaponAPI.WeaponSize, Integer> mapOfSizesEnergy = new LinkedHashMap<>();
+        LinkedHashMap<WeaponAPI.WeaponSize, Integer> mapOfSizesMissile = new LinkedHashMap<>();
+        LinkedHashMap<WeaponAPI.WeaponSize, Integer> mapOfSizesBallistic = new LinkedHashMap<>();
+        LinkedHashMap<WeaponAPI.WeaponSize, Integer> mapOfSizesLaunchBay = new LinkedHashMap<>();
+        LinkedHashMap<WeaponAPI.WeaponSize, Integer> mapOfSizesUniversal = new LinkedHashMap<>();
+        LinkedHashMap<WeaponAPI.WeaponSize, Integer> mapOfSizesHybrid = new LinkedHashMap<>();
+        LinkedHashMap<WeaponAPI.WeaponSize, Integer> mapOfSizesSynergy = new LinkedHashMap<>();
+        LinkedHashMap<WeaponAPI.WeaponSize, Integer> mapOfSizesComposite = new LinkedHashMap<>();
 
         populateWeaponSizeMap(energyWeapons, mapOfSizesEnergy);
         populateWeaponSizeMap(missileWeapons, mapOfSizesMissile);
@@ -284,8 +285,8 @@ public class ShipInfoGenerator {
         return tooltip.addPara(text, 3f, Color.ORANGE, highlights.toArray(new String[0]));
     }
 
-    static HashMap<String, Integer> countBuiltInWeapons(ShipHullSpecAPI ship,boolean isFighter) {
-        HashMap<String, Integer> builtInWeaponsMap = new HashMap<>();
+    static LinkedHashMap<String, Integer> countBuiltInWeapons(ShipHullSpecAPI ship,boolean isFighter) {
+        LinkedHashMap<String, Integer> builtInWeaponsMap = new LinkedHashMap<>();
 
         if(isFighter){
             return FighterInfoRepo.getFromRepo(ship.getHullId()).getWeaponMap();
@@ -317,7 +318,7 @@ public class ShipInfoGenerator {
 
     static public LabelAPI processShipData(ShipHullSpecAPI ship, TooltipMakerAPI tooltip,boolean isFighter) {
         // Count built-in weapons
-        HashMap<String, Integer> builtInWeaponsMap = countBuiltInWeapons(ship,isFighter);
+        LinkedHashMap<String, Integer> builtInWeaponsMap = countBuiltInWeapons(ship,isFighter);
 
         // Assuming you want to display this information similarly
         // Build the pairs for the built-in weapons

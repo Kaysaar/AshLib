@@ -9,6 +9,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class FighterInfoRepo {
 
@@ -35,7 +36,7 @@ public class FighterInfoRepo {
                 JSONObject variantJson = Global.getSettings().loadJSON(filepath);
 
                 // Initialize a map to store weapon counts
-                HashMap<String, Integer> weaponMap = new HashMap<String, Integer>();
+                LinkedHashMap<String, Integer> weaponMap = new LinkedHashMap<String, Integer>();
 
                 // Extract weapon information from the JSON
                 if (variantJson.has("weaponGroups")) {

@@ -1,6 +1,7 @@
 package ashlib.data.plugins.info;
 
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.combat.ShipHullSpecAPI;
 import com.fs.starfarer.api.fleet.FleetMemberAPI;
 import com.fs.starfarer.api.fleet.FleetMemberType;
 import com.fs.starfarer.api.graphics.SpriteAPI;
@@ -18,7 +19,10 @@ import ashlib.data.plugins.ui.models.StatNumberUIPackage;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Set;
 
+import static ashlib.data.plugins.info.ShipInfoGenerator.countBuiltInWeapons;
 import static ashlib.data.plugins.info.ShipInfoGenerator.generateOtherInfo;
 
 
@@ -78,6 +82,12 @@ public class FighterInfoGenerator {
         firstColumnLogisticData.add(new StatNumberUIPackage(tooltipMakerAPI.addPara(rangeText, 3f), text1, null,Color.ORANGE, null));
 
         return firstColumnLogisticData;
+    }
+    public static Set<String> getFighterWeapons(FighterWingSpecAPI wing){
+        FleetMemberAPI ship = Global.getFactory().createFleetMember(FleetMemberType.FIGHTER_WING,wing.getId());
+        ship.getHullSpec().getHullId();
+        ShipHullSpecAPI spec  = ship.getHullSpec();
+        return countBuiltInWeapons(spec,true).keySet();
     }
     public static ArrayList<StatNumberUIPackage> getFighterStatsSecondRow(FighterWingSpecAPI wing, TooltipMakerAPI tooltipMakerAPI){
         ArrayList<StatNumberUIPackage> columnData = new ArrayList<>();
