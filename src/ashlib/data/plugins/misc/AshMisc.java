@@ -318,8 +318,12 @@ public class AshMisc {
 
     public static String cleanPath(String fullPath) {
         // Define the keyword that marks the beginning of the subpath
-        String subPathKeyword = "data\\";
+        String subPathKeyword = "data/";
 
+        String os = System.getProperty("os.name");
+        if(os.toLowerCase().contains("win")) {
+            subPathKeyword = "data\\";
+        }
         // Find the index of the subpath keyword
         int startIndex = fullPath.indexOf(subPathKeyword);
 
