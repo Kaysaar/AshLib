@@ -185,9 +185,9 @@ class AshReplaceAISkills :EveryFrameScript {
         val campaignUI = Global.getSector().campaignUI
         val dialog = campaignUI.currentInteractionDialog
         val core = if (dialog == null) {
-            invokeMethod("getCore", campaignUI) as CoreUIAPI
+            invokeMethod("getCore", campaignUI) as CoreUIAPI?
         } else {
-            invokeMethod("getCoreUI", dialog) as CoreUIAPI
+            invokeMethod("getCoreUI", dialog) as CoreUIAPI?
         }
 
         return if (core == null) null else core as UIPanelAPI
@@ -405,7 +405,7 @@ class AshReplaceAISkills :EveryFrameScript {
 
     private fun populateSkillMap(skill: String, person: PersonAPI?) {
         val panelAPI = Global.getSettings().createCustom(100f, 100f, null)
-        val tooltip = panelAPI.createUIElement(500f, 70f, false)
+        val tooltip = panelAPI.createUIElement(500f, 70f, true)
         val dummy = Global.getFactory().createPerson()
         var level = mapSkillRaw!![skill]!!
         var demoting = true
