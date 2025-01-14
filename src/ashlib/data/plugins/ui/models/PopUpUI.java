@@ -326,6 +326,10 @@ public class PopUpUI implements CustomUIPanelPlugin {
         }
 
     }
+    public void forceDismiss(){
+        ProductionUtil.getCoreUI().removeComponent(panelToInfluence);
+        onExit();
+    }
     public void onExit(){
 
     }
