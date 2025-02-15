@@ -1,6 +1,7 @@
 package ashlib.data.plugins.ui.models;
 
 import ashlib.data.plugins.misc.AshMisc;
+import ashlib.data.plugins.reflection.ReflectionBetterUtilis;
 import ashlib.data.plugins.ui.plugins.UILinesRenderer;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.CampaignUIAPI;
@@ -11,26 +12,31 @@ import com.fs.starfarer.api.graphics.SpriteAPI;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.ui.*;
 import com.fs.starfarer.api.util.Misc;
+import com.fs.starfarer.api.util.Pair;
 import org.lwjgl.input.Keyboard;
 
 import java.awt.*;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.List;
 
 public class PopUpUI implements CustomUIPanelPlugin {
+
+    public int limit = 5;
+    public float totalFrames;
     private static class ReflectionUtilis {
         // Code taken and modified from Grand Colonies
         private static final Class<?> fieldClass;
         private static final MethodHandles.Lookup lookup = MethodHandles.lookup();
-        private static final java.lang.invoke.MethodHandle setFieldHandle;
-        private static final java.lang.invoke.MethodHandle getFieldHandle;
-        private static final java.lang.invoke.MethodHandle getFieldNameHandle;
-        private static final java.lang.invoke.MethodHandle setFieldAccessibleHandle;
+        private static final MethodHandle setFieldHandle;
+        private static final MethodHandle getFieldHandle;
+        private static final MethodHandle getFieldNameHandle;
+        private static final MethodHandle setFieldAccessibleHandle;
         private static final Class<?> methodClass;
-        private static final java.lang.invoke.MethodHandle getMethodNameHandle;
-        private static final java.lang.invoke.MethodHandle invokeMethodHandle;
-        private static final java.lang.invoke.MethodHandle setMethodAccessable;
+        private static final MethodHandle getMethodNameHandle;
+        private static final MethodHandle invokeMethodHandle;
+        private static final MethodHandle setMethodAccessable;
 
         static {
             try {
@@ -105,7 +111,7 @@ public class PopUpUI implements CustomUIPanelPlugin {
             try {
                 Class<?> instances = instanceToModify.getClass();
                 while (instances != null) {
-                    for (Object  obj : instances.getDeclaredFields()) {
+                    for (Object obj : instances.getDeclaredFields()) {
                         setFieldAccessibleHandle.invoke(obj, true);
                         String name = (String) getFieldNameHandle.invoke(obj);
                         if (name.equals(fieldName)) {
@@ -158,16 +164,125 @@ public class PopUpUI implements CustomUIPanelPlugin {
             }
         }
 
+        public static Pair<Object, Class<?>[]> getMethodFromSuperclass(String methodName, Object instance) {
+            Class<?> currentClass = instance.getClass();
+
+            while (currentClass != null) {
+                // Retrieve all declared methods in the current class
+                Object[] methods = currentClass.getDeclaredMethods();
+
+                for (Object method : methods) {
+                    try {
+                        // Retrieve the MethodHandle for the getParameterTypes method
+                        MethodHandle getParameterTypesHandle = ReflectionBetterUtilis.getParameterTypesHandle(method.getClass(), "getParameterTypes");
+                        // Use the MethodHandle to retrieve the method's name
+
+                        // Check if the method name matches
+                        if (getMethodNameHandle.invoke(method).equals(methodName)) {
+                            // Invoke the MethodHandle to get the parameter types
+                            Class<?>[] parameterTypes = (Class<?>[]) getParameterTypesHandle.invoke(method);
+                            return new Pair<>(method, parameterTypes);
+                        }
+                    } catch (Throwable e) {
+                        e.printStackTrace();  // Handle any reflection errors
+                    }
+                }
+                // Move to the superclass if no match is found
+                currentClass = currentClass.getSuperclass();
+            }
+
+            // Return null if the method was not found in the class hierarchy
+            return null;
+        }
+
         public static Object invokeMethodWithAutoProjection(String methodName, Object instance, Object... arguments) {
+            // Retrieve the method and its parameter types
+            Pair<Object, Class<?>[]> methodPair = getMethodFromSuperclass(methodName, instance);
+
+            // Check if the method was found
+            if (methodPair == null) {
+                try {
+                    throw new NoSuchMethodException("Method " + methodName + " not found in class hierarchy of " + instance.getClass().getName());
+                } catch (NoSuchMethodException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            Object method = methodPair.one;
+            Class<?>[] parameterTypes = methodPair.two;
+
+            // Prepare arguments by projecting them to the correct types
+            Object[] projectedArgs = new Object[parameterTypes.length];
+            for (int index = 0; index < parameterTypes.length; index++) {
+                Object arg = (arguments.length > index) ? arguments[index] : null;
+
+                if (arg == null) {
+                    // If the expected type is a primitive type, throw an exception
+                    if (parameterTypes[index].isPrimitive()) {
+                        throw new IllegalArgumentException("Argument at index " + index + " cannot be null for primitive type " + parameterTypes[index].getName());
+                    }
+                    projectedArgs[index] = null; // Keep nulls as null for reference types
+                } else {
+                    // Try to convert the argument to the expected parameter type
+                    try {
+                        projectedArgs[index] = convertArgument(arg, parameterTypes[index]);
+                    } catch (Exception e) {
+                        throw new IllegalArgumentException("Cannot convert argument at index " + index + " to " + parameterTypes[index].getName(), e);
+                    }
+                }
+            }
+
+            // Ensure the method is accessible
             try {
-                Object method = instance.getClass().getMethod(methodName);
-                return invokeMethodHandle.invoke(method, instance, arguments);
+                setMethodAccessable.invoke(method, true);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+            // Invoke the method with the projected arguments
+            try {
+                return invokeMethodHandle.invoke(method, instance, projectedArgs);
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
         }
+
+        // Helper function to convert an argument to the expected type
+        public static Object convertArgument(Object arg, Class<?> targetType) {
+            if (targetType.isAssignableFrom(arg.getClass())) {
+                return arg; // Use as-is if types match
+            } else if (targetType.isPrimitive()) {
+                // Handle primitive types by boxing
+                if (targetType == int.class) {
+                    return ((Number) arg).intValue();
+                } else if (targetType == long.class) {
+                    return ((Number) arg).longValue();
+                } else if (targetType == double.class) {
+                    return ((Number) arg).doubleValue();
+                } else if (targetType == float.class) {
+                    return ((Number) arg).floatValue();
+                } else if (targetType == short.class) {
+                    return ((Number) arg).shortValue();
+                } else if (targetType == byte.class) {
+                    return ((Number) arg).byteValue();
+                } else if (targetType == boolean.class) {
+                    return arg;
+                } else if (targetType == char.class) {
+                    return arg;
+                } else {
+                    throw new IllegalArgumentException("Unsupported primitive type: " + targetType.getName());
+                }
+            } else {
+                // For reference types, perform a cast if possible
+                return targetType.cast(arg);
+            }
+        }
     }
-    private static class ProductionUtil{
+
+    public static List<UIComponentAPI> getChildren(UIPanelAPI panelAPI) {
+        return ReflectionUtilis.getChildrenCopy(panelAPI);
+    }
+
+    private static class ProductionUtil {
         public static UIPanelAPI getCoreUI() {
             CampaignUIAPI campaignUI;
             campaignUI = Global.getSector().getCampaignUI();
@@ -175,17 +290,16 @@ public class PopUpUI implements CustomUIPanelPlugin {
 
             CoreUIAPI core;
             if (dialog == null) {
-                core = (CoreUIAPI) ReflectionUtilis.invokeMethod("getCore",campaignUI);
-            }
-            else {
-                core = (CoreUIAPI) ReflectionUtilis.invokeMethod( "getCoreUI",dialog);
+                core = (CoreUIAPI) ReflectionUtilis.invokeMethod("getCore", campaignUI);
+            } else {
+                core = (CoreUIAPI) ReflectionUtilis.invokeMethod("getCoreUI", dialog);
             }
             return core == null ? null : (UIPanelAPI) core;
         }
 
         public static UIPanelAPI getCurrentTab() {
             UIPanelAPI coreUltimate = getCoreUI();
-            UIPanelAPI core = (UIPanelAPI) ReflectionUtilis.invokeMethod("getCurrentTab",coreUltimate);
+            UIPanelAPI core = (UIPanelAPI) ReflectionUtilis.invokeMethod("getCurrentTab", coreUltimate);
             return core == null ? null : (UIPanelAPI) core;
         }
     }
@@ -218,7 +332,8 @@ public class PopUpUI implements CustomUIPanelPlugin {
     public ButtonAPI getCancelButton() {
         return cancelButton;
     }
-
+    public boolean reachedMaxHeight =  false;
+    float originalSizeX ,originalSizeY;
     float x,y;
     @Override
     public void positionChanged(PositionAPI position) {
@@ -228,8 +343,12 @@ public class PopUpUI implements CustomUIPanelPlugin {
     public void init(CustomPanelAPI panelAPI,float x, float y,boolean isDialog) {
         panelToInfluence = panelAPI;
         UIPanelAPI mainPanel =  ProductionUtil.getCoreUI();
-        createUI(panelToInfluence);
+        originalSizeX = panelAPI.getPosition().getWidth();
+        originalSizeY = panelAPI.getPosition().getHeight();
+
+        panelToInfluence.getPosition().setSize(16,16);
         this.isDialog = isDialog;
+
         mainPanel.addComponent(panelToInfluence).inTL(x, mainPanel.getPosition().getHeight()-y);
         mainPanel.bringComponentToTop(panelToInfluence);
         rendererBorder.setPanel(panelToInfluence);
@@ -247,14 +366,19 @@ public class PopUpUI implements CustomUIPanelPlugin {
     @Override
     public void renderBelow(float alphaMult) {
         if(panelToInfluence != null){
+            TiledTextureRenderer renderer = new TiledTextureRenderer(panelBackground.getTextureId());
             if(isDialog){
                 blackBackground.setSize(ProductionUtil.getCoreUI().getPosition().getWidth(), ProductionUtil.getCoreUI().getPosition().getHeight());
                 blackBackground.setColor(Color.black);
                 blackBackground.setAlphaMult(0.6f);
-                blackBackground.renderAtCenter( ProductionUtil.getCoreUI().getPosition().getCenterX(),ProductionUtil.getCoreUI().getPosition().getCenterY());
+                blackBackground.renderAtCenter(ProductionUtil.getCoreUI().getPosition().getCenterX(),ProductionUtil.getCoreUI().getPosition().getCenterY());
+                renderer.renderTiledTexture(panelToInfluence.getPosition().getX(), panelToInfluence.getPosition().getY(), panelToInfluence.getPosition().getWidth(),  panelToInfluence.getPosition().getHeight(), panelBackground.getTextureWidth(),  panelBackground.getTextureHeight(),(frames/limit)*0.9F,Color.BLACK);
+
             }
-            TiledTextureRenderer renderer = new TiledTextureRenderer(panelBackground.getTextureId());
-            renderer.renderTiledTexture(panelToInfluence.getPosition().getX(), panelToInfluence.getPosition().getY(), panelToInfluence.getPosition().getWidth(),  panelToInfluence.getPosition().getHeight(), panelBackground.getTextureWidth(),  panelBackground.getTextureHeight());
+            else {
+                renderer.renderTiledTexture(panelToInfluence.getPosition().getX(), panelToInfluence.getPosition().getY(), panelToInfluence.getPosition().getWidth(),  panelToInfluence.getPosition().getHeight(), panelBackground.getTextureWidth(),  panelBackground.getTextureHeight(),(frames/limit),panelBackground.getColor());
+
+            }
             if(isDialog){
                 renderBorders(panelToInfluence);
             }
@@ -273,8 +397,23 @@ public class PopUpUI implements CustomUIPanelPlugin {
 
     @Override
     public void advance(float amount) {
-        if(frames<=15){
+
+        if(frames<=limit){
             frames++;
+            float progress = frames/limit;
+            if(frames<limit&&!reachedMaxHeight){
+                panelToInfluence.getPosition().setSize(originalSizeX,originalSizeY*progress);
+                return;
+            }
+            if(frames>=limit&&!reachedMaxHeight){
+                reachedMaxHeight = true;
+                panelToInfluence.getPosition().setSize(originalSizeX,originalSizeY);
+                createUI(panelToInfluence);
+                return;
+
+            }
+
+
         }
         if(confirmButton!=null){
             if(confirmButton.isChecked()){
@@ -299,7 +438,7 @@ public class PopUpUI implements CustomUIPanelPlugin {
     @Override
     public void processInput(List<InputEventAPI> events) {
         for (InputEventAPI event : events) {
-            if(frames>=15){
+            if(frames>=limit-1&&reachedMaxHeight){
                 if(event.isMouseDownEvent()&&!isDialog){
                     TrapezoidButtonDetector detector = new TrapezoidButtonDetector();
                     float xLeft = panelToInfluence.getPosition().getX();
@@ -339,6 +478,8 @@ public class PopUpUI implements CustomUIPanelPlugin {
     }
     public void renderBorders(CustomPanelAPI panelAPI) {
         float leftX = panelAPI.getPosition().getX()+16;
+        float currAlpha = frames/limit;
+        if(currAlpha>=1)currAlpha =1;
         top.setSize(16,16);
         bot.setSize(16,16);
         topLeft.setSize(16,16);
@@ -347,6 +488,16 @@ public class PopUpUI implements CustomUIPanelPlugin {
         bottomRight.setSize(16,16);
         left.setSize(16,16);
         right.setSize(16,16);
+
+        top.setAlphaMult(currAlpha);
+        bot.setAlphaMult(currAlpha);
+        topLeft.setAlphaMult(currAlpha);
+        topRight.setAlphaMult(currAlpha);
+        bottomLeft.setAlphaMult(currAlpha);
+        bottomRight.setAlphaMult(currAlpha);
+        left.setAlphaMult(currAlpha);
+        right.setAlphaMult(currAlpha);
+
         float rightX = panelAPI.getPosition().getX()+panelAPI.getPosition().getWidth()-16;
         float botX = panelAPI.getPosition().getY()+16;
         AshMisc.startStencilWithXPad(panelAPI,8);
@@ -386,7 +537,7 @@ public class PopUpUI implements CustomUIPanelPlugin {
         generateCancelButton(tooltip);
         confirmButton.getPosition().inTL(0,0);
         cancelButton.getPosition().inTL(buttonConfirmWidth+5,0);
-        float bottom = Math.abs(mainPanel.getPosition().getY()+mainPanel.getPosition().getHeight());
+        float bottom = originalSizeY;
         mainPanel.addUIElement(tooltip).inTL(mainPanel.getPosition().getWidth()-(totalWidth)-10,bottom-40);
     }
 }

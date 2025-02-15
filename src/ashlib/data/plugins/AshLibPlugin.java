@@ -1,6 +1,7 @@
 package ashlib.data.plugins;
 
 import ashlib.data.plugins.handlers.AICoreSkillPollHandler;
+import ashlib.data.scripts.AiCoreLevelUpHijacker;
 import ashlib.data.scripts.AshReplaceAISkills;;
 import com.fs.starfarer.api.BaseModPlugin;
 import ashlib.data.plugins.repositories.ShipRenderInfoRepo;
@@ -22,6 +23,6 @@ public class AshLibPlugin extends BaseModPlugin {
     public void onGameLoad(boolean newGame) {
         super.onGameLoad(newGame);
         Global.getSector().addTransientScript(new AshReplaceAISkills());
-
+        Global.getSector().addTransientScript(new AiCoreLevelUpHijacker());
     }
 }
