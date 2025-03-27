@@ -335,7 +335,7 @@ public class AiCoreLevelUpHijacker implements EveryFrameScript {
 
     @Override
     public void advance(float amount) {
-        if(CoreUITabId.REFIT.equals(Global.getSector().getCampaignUI().getCurrentCoreTab())||CoreUITabId.FLEET.equals(Global.getSector().getCampaignUI().getCurrentCoreTab())) {
+        if(Global.getSector().getCampaignUI().getCurrentCoreTab()!=null) {
             if(button!=null&&button.isChecked()){
                 button.setChecked(false);
                 PersonAPI person = (PersonAPI) ReflectionUtilis.invokeMethod("getPerson",officerRowData);
@@ -371,8 +371,9 @@ public class AiCoreLevelUpHijacker implements EveryFrameScript {
                 }
 
                 List<UIComponentAPI> comps = ReflectionUtilis.getChildrenCopy(ProductionUtil.getCoreUI());
-                if(comps.size()==19&&button==null){
-                    UIComponentAPI comp = comps.get(18);
+
+                if(comps.size()>=19 &&button==null){
+                    UIComponentAPI comp = comps.get(comps.size()-1);
                     UIPanelAPI compPanel = (UIPanelAPI) ReflectionUtilis.invokeMethod("getInnerPanel",comp);
                         boolean found = officerRowData!=null;
                         if(found){
@@ -400,7 +401,7 @@ public class AiCoreLevelUpHijacker implements EveryFrameScript {
 
 
                 }
-                else if(comps.size()!=19) {
+                else if(comps.size()<19) {
                     button =  null;
                     currDialog = null;
                     officerRowData = null;
