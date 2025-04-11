@@ -11,6 +11,7 @@ import com.fs.starfarer.api.campaign.InteractionDialogAPI;
 import com.fs.starfarer.api.graphics.SpriteAPI;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.ui.*;
+import com.fs.starfarer.api.util.IntervalUtil;
 import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.Pair;
 import org.lwjgl.input.Keyboard;
@@ -25,6 +26,9 @@ public class PopUpUI implements CustomUIPanelPlugin {
 
     public int limit = 5;
     public float totalFrames;
+    public IntervalUtil betweenCodex = null;
+    public boolean detectedCodex = false;
+    public boolean attemptedExit = false;
     private static class ReflectionUtilis {
         // Code taken and modified from Grand Colonies
         private static final Class<?> fieldClass;
@@ -397,7 +401,12 @@ public class PopUpUI implements CustomUIPanelPlugin {
 
     @Override
     public void advance(float amount) {
-
+        if(betweenCodex!=null){
+            betweenCodex.advance(amount);
+            if(betweenCodex.intervalElapsed()){
+                betweenCodex = null;
+            }
+        }
         if(frames<=limit){
             frames++;
             float progress = frames/limit;
@@ -431,12 +440,21 @@ public class PopUpUI implements CustomUIPanelPlugin {
             }
 
         }
+        if(Global.CODEX_TOOLTIP_MODE){
+            detectedCodex = true;
+        }
+        if(!Global.CODEX_TOOLTIP_MODE&&detectedCodex){
+            detectedCodex = false;
+            betweenCodex = new IntervalUtil(0.1f,0.1f);
+        }
+
     }
     public void applyConfirmScript(){
 
     }
     @Override
     public void processInput(List<InputEventAPI> events) {
+     if(betweenCodex!=null)return;
         for (InputEventAPI event : events) {
             if(frames>=limit-1&&reachedMaxHeight){
                 if(event.isMouseDownEvent()&&!isDialog){
@@ -454,10 +472,17 @@ public class PopUpUI implements CustomUIPanelPlugin {
                 }
                 if(!event.isConsumed()){
                     if(event.getEventValue()== Keyboard.KEY_ESCAPE){
-                        ProductionUtil.getCoreUI().removeComponent(panelToInfluence);
-                        event.consume();
-                        onExit();
-                        break;
+                        if(attemptedExit){
+                            ProductionUtil.getCoreUI().removeComponent(panelToInfluence);
+                            event.consume();
+                            onExit();
+                            break;
+                        }
+                        else {
+                            attemptedExit = true;
+                        }
+
+
                     }
                 }
             }

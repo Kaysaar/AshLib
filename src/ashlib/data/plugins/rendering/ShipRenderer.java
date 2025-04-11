@@ -117,7 +117,7 @@ public class ShipRenderer implements CustomUIPanelPlugin {
             if(colorOverride!=null){
                 sprite.setColor(colorOverride);
             }
-
+            sprite.setAlphaMult(alphaMult);
             sprite.setSize((float) entry.getValue().width * scale, (float) entry.getValue().height * scale);
             sprite.renderAtCenter(entry.getKey().getPosition().getCenterX(), entry.getKey().getPosition().getCenterY());
             for (ShipRenderInfo.Slot builtInSlot : entry.getValue().built_in_slots) {

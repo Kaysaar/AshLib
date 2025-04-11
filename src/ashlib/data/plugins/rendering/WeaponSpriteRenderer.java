@@ -9,9 +9,10 @@ import com.fs.starfarer.api.loading.ProjectileWeaponSpecAPI;
 import com.fs.starfarer.api.loading.WeaponSpecAPI;
 import com.fs.starfarer.api.ui.CustomPanelAPI;
 import com.fs.starfarer.api.ui.PositionAPI;
-import com.fs.starfarer.loading.specs.Object;
+
 import org.lwjgl.util.vector.Vector2f;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,9 +23,14 @@ public class WeaponSpriteRenderer implements CustomUIPanelPlugin {
     WeaponSpecAPI specWeapon;
     String idOfMissileSprite = null;
     float scale = 1f;
+    public Color overlayColor;
     Vector2f originalCenterOfMissle;
     public void setAnchor(CustomPanelAPI anchor) {
         this.anchor = anchor;
+    }
+
+    public void setOverlayColor(Color overlayColor) {
+        this.overlayColor = overlayColor;
     }
 
     public WeaponSpriteRenderer(WeaponSpecAPI spec, float iconSize, float angle) {
@@ -74,11 +80,18 @@ public class WeaponSpriteRenderer implements CustomUIPanelPlugin {
     public void render(float alphaMult) {
         if (anchor != null) {
             for (SpriteAPI spriteAPI : spritesToRedner) {
+                if(overlayColor!=null){
+                    spriteAPI.setColor(overlayColor);
+                }
                 spriteAPI.renderAtCenter(anchor.getPosition().getCenterX(), anchor.getPosition().getCenterY());
             }
         }
         if(idOfMissileSprite!=null){
+
             SpriteAPI sprite = Global.getSettings().getSprite(idOfMissileSprite);
+            if(overlayColor!=null){
+                sprite.setColor(overlayColor);
+            }
             sprite.setSize(sprite.getWidth()*scale,sprite.getHeight()*scale);
             for (Vector2f turretFireOffset : specWeapon.getTurretFireOffsets()) {
                 sprite.renderAtCenter((anchor.getPosition().getCenterX()+(turretFireOffset.getY()*scale)),anchor.getPosition().getCenterY()+(turretFireOffset.x*scale));
@@ -100,11 +113,9 @@ public class WeaponSpriteRenderer implements CustomUIPanelPlugin {
     }
 
     @Override
-    public void buttonPressed(java.lang.Object buttonId) {
-
-    }
-
     public void buttonPressed(Object buttonId) {
 
     }
+
+
 }
