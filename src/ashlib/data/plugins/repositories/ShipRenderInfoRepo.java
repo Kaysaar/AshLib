@@ -30,9 +30,8 @@ public class ShipRenderInfoRepo {
     }
 
     public static void populateShip(ShipHullSpecAPI allShipHullSpec) {
-        if(allShipHullSpec.getHints().contains(ShipHullSpecAPI.ShipTypeHints.STATION)) return;
         try {
-            if(allShipHullSpec.getBaseHullId().contains("atlas2")){
+            if(allShipHullSpec.getBaseHullId().equals("ass_arkship")){
                 String test ="a";
 
             }
