@@ -14,6 +14,8 @@ import com.fs.starfarer.api.ui.*;
 import com.fs.starfarer.api.util.IntervalUtil;
 import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.Pair;
+import com.fs.starfarer.campaign.CampaignState;
+import com.fs.state.AppDriver;
 import org.lwjgl.input.Keyboard;
 
 import java.awt.*;
@@ -290,17 +292,24 @@ public class PopUpUI implements CustomUIPanelPlugin {
         public static UIPanelAPI getCoreUI() {
             CampaignUIAPI campaignUI;
             campaignUI = Global.getSector().getCampaignUI();
-            InteractionDialogAPI dialog = campaignUI.getCurrentInteractionDialog();
+            Object dialog = campaignUI.getCurrentInteractionDialog();
+            if(AppDriver.getInstance().getCurrentState() instanceof CampaignState){
+                dialog = ReflectionUtilis.invokeMethod("getEncounterDialog", AppDriver.getInstance().getCurrentState());
+            }
 
             CoreUIAPI core;
             if (dialog == null) {
-                core = (CoreUIAPI) ReflectionUtilis.invokeMethod("getCore", campaignUI);
-            } else {
-                core = (CoreUIAPI) ReflectionUtilis.invokeMethod("getCoreUI", dialog);
+                core = (CoreUIAPI) ReflectionUtilis.invokeMethod("getCore",campaignUI);
+            }
+            else {
+                core = (CoreUIAPI) ReflectionUtilis.invokeMethod( "getCoreUI",dialog);
+            }
+            if(core==null&&dialog!=null){
+                return (UIPanelAPI) ReflectionUtilis.invokeMethod("getParent",dialog);
+
             }
             return core == null ? null : (UIPanelAPI) core;
         }
-
         public static UIPanelAPI getCurrentTab() {
             UIPanelAPI coreUltimate = getCoreUI();
             UIPanelAPI core = (UIPanelAPI) ReflectionUtilis.invokeMethod("getCurrentTab", coreUltimate);
