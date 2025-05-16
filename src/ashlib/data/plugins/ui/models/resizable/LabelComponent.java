@@ -18,13 +18,20 @@ public class LabelComponent extends ResizableComponent {
     public LazyFont font;
     float width;
     float pWidth,pHeight;
+    public String text;
     public Color color ;
-    public LabelComponent(String font, float fontSize, String text, Color color,float width,float height) {
+
+    public String getText() {
+        return text;
+    }
+
+    public LabelComponent(String font, float fontSize, String text, Color color, float width, float height) {
         this.originalWidth =width;
         this.fontSize = fontSize;
         this.color = color;
         try {
             this.font = LazyFont.FontLoader.loadFont(font);
+            this.text  = text;
             draw = this.font.createText(text, color, fontSize);
             draw.setMaxWidth(width);
         } catch (FontException e) {
@@ -36,6 +43,7 @@ public class LabelComponent extends ResizableComponent {
         componentPanel = Global.getSettings().createCustom(width,height,this);
     }
     public void setText(String text) {
+        this.text = text;
         draw = this.font.createText(text, color, fontSize);
         draw.setMaxWidth(pWidth);
     }
