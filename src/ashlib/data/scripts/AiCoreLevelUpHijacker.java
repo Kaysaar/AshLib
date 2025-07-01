@@ -379,19 +379,22 @@ public class AiCoreLevelUpHijacker implements EveryFrameScript {
                         if(found){
                             for (UIComponentAPI componentAPI : ReflectionUtilis.getChildrenCopy(compPanel)) {
                                 if(componentAPI instanceof ButtonAPI){
-                                    if(((ButtonAPI) componentAPI).getText().toLowerCase().contains("confirm")){
-                                        CustomPanelAPI panel = Global.getSettings().createCustom(componentAPI.getPosition().getWidth(),componentAPI.getPosition().getHeight(),null);
-                                        TooltipMakerAPI tooltip = panel.createUIElement(panel.getPosition().getWidth(),panel.getPosition().getHeight(),false);
-                                        tooltip.setButtonFontOrbitron20();
-                                        button =tooltip.addButton("Confirm",null,Misc.getStoryOptionColor(),Misc.getStoryDarkColor(),Alignment.MID,CutStyle.TL_BR,panel.getPosition().getWidth(),panel.getPosition().getHeight(),0f);
-                                        button.setShortcut(Keyboard.KEY_G,true);
-                                        button.setEnabled(((ButtonAPI) componentAPI).isEnabled()
-                                        );
-                                        panel.addUIElement(tooltip).inTL(0,0);
-                                        compPanel.addComponent(panel).inTL(componentAPI.getPosition().getX()-compPanel.getPosition().getX(),compPanel.getPosition().getY()-componentAPI.getPosition().getY()+compPanel.getPosition().getHeight()-componentAPI.getPosition().getHeight());
-                                        compPanel.removeComponent(componentAPI);
-                                        currDialog = comp;
-                                        break;
+                                    if(((ButtonAPI) componentAPI).getText()!=null){
+                                        if(((ButtonAPI) componentAPI).getText().toLowerCase().contains("confirm")){
+                                            CustomPanelAPI panel = Global.getSettings().createCustom(componentAPI.getPosition().getWidth(),componentAPI.getPosition().getHeight(),null);
+                                            TooltipMakerAPI tooltip = panel.createUIElement(panel.getPosition().getWidth(),panel.getPosition().getHeight(),false);
+                                            tooltip.setButtonFontOrbitron20();
+                                            button =tooltip.addButton("Confirm",null,Misc.getStoryOptionColor(),Misc.getStoryDarkColor(),Alignment.MID,CutStyle.TL_BR,panel.getPosition().getWidth(),panel.getPosition().getHeight(),0f);
+                                            button.setShortcut(Keyboard.KEY_G,true);
+                                            button.setEnabled(((ButtonAPI) componentAPI).isEnabled()
+                                            );
+                                            panel.addUIElement(tooltip).inTL(0,0);
+                                            compPanel.addComponent(panel).inTL(componentAPI.getPosition().getX()-compPanel.getPosition().getX(),compPanel.getPosition().getY()-componentAPI.getPosition().getY()+compPanel.getPosition().getHeight()-componentAPI.getPosition().getHeight());
+                                            compPanel.removeComponent(componentAPI);
+                                            currDialog = comp;
+                                            break;
+                                        }
+
                                     }
 
                                 }

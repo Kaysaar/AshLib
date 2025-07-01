@@ -310,6 +310,21 @@ public class PopUpUI implements CustomUIPanelPlugin {
             }
             return core == null ? null : (UIPanelAPI) core;
         }
+        public static UIPanelAPI getCoreUIForDialog() {
+            CampaignUIAPI campaignUI;
+            campaignUI = Global.getSector().getCampaignUI();
+            Object dialog = campaignUI.getCurrentInteractionDialog();
+            if(AppDriver.getInstance().getCurrentState() instanceof CampaignState){
+                dialog = ReflectionUtilis.invokeMethod("getEncounterDialog", AppDriver.getInstance().getCurrentState());
+            }
+
+            CoreUIAPI core;
+            if(dialog!=null){
+                return (UIPanelAPI) ReflectionUtilis.invokeMethod("getParent",dialog);
+
+            }
+            return null;
+        }
         public static UIPanelAPI getCurrentTab() {
             UIPanelAPI coreUltimate = getCoreUI();
             UIPanelAPI core = (UIPanelAPI) ReflectionUtilis.invokeMethod("getCurrentTab", coreUltimate);
@@ -328,6 +343,7 @@ public class PopUpUI implements CustomUIPanelPlugin {
     SpriteAPI bottomLeft= Global.getSettings().getSprite("ui","panel00_bot_left");
     SpriteAPI bottomRight= Global.getSettings().getSprite("ui","panel00_bot_right");
     public static float buttonConfirmWidth = 160;
+    UIPanelAPI parent;
     public float frames;
     public CustomPanelAPI panelToInfluence;
     public UILinesRenderer rendererBorder = new UILinesRenderer(0f);
@@ -355,15 +371,29 @@ public class PopUpUI implements CustomUIPanelPlugin {
 
     public void init(CustomPanelAPI panelAPI,float x, float y,boolean isDialog) {
         panelToInfluence = panelAPI;
-        UIPanelAPI mainPanel =  ProductionUtil.getCoreUI();
+        parent =  ProductionUtil.getCoreUI();
         originalSizeX = panelAPI.getPosition().getWidth();
         originalSizeY = panelAPI.getPosition().getHeight();
 
         panelToInfluence.getPosition().setSize(16,16);
         this.isDialog = isDialog;
 
-        mainPanel.addComponent(panelToInfluence).inTL(x, mainPanel.getPosition().getHeight()-y);
-        mainPanel.bringComponentToTop(panelToInfluence);
+        parent.addComponent(panelToInfluence).inTL(x, parent.getPosition().getHeight()-y);
+        parent.bringComponentToTop(panelToInfluence);
+        rendererBorder.setPanel(panelToInfluence);
+
+    }
+    public void initForDialog(CustomPanelAPI panelAPI,float x, float y,boolean isDialog) {
+        panelToInfluence = panelAPI;
+        parent =  ProductionUtil.getCoreUIForDialog();
+        originalSizeX = panelAPI.getPosition().getWidth();
+        originalSizeY = panelAPI.getPosition().getHeight();
+
+        panelToInfluence.getPosition().setSize(16,16);
+        this.isDialog = isDialog;
+
+        parent.addComponent(panelToInfluence).inTL(x, parent.getPosition().getHeight()-y);
+        parent.bringComponentToTop(panelToInfluence);
         rendererBorder.setPanel(panelToInfluence);
 
     }
@@ -437,14 +467,14 @@ public class PopUpUI implements CustomUIPanelPlugin {
             if(confirmButton.isChecked()){
                 confirmButton.setChecked(false);
                 applyConfirmScript();
-                ProductionUtil.getCoreUI().removeComponent(panelToInfluence);
+                parent.removeComponent(panelToInfluence);
                 onExit();
             }
         }
         if(cancelButton!=null){
             if(cancelButton.isChecked()){
                 cancelButton.setChecked(false);
-                ProductionUtil.getCoreUI().removeComponent(panelToInfluence);
+                parent.removeComponent(panelToInfluence);
                 onExit();
             }
 
@@ -474,7 +504,7 @@ public class PopUpUI implements CustomUIPanelPlugin {
                     float yTop = panelToInfluence.getPosition().getY()+panelToInfluence.getPosition().getHeight();
                     boolean hovers = detector.determineIfHoversOverButton(xLeft,yTop,xRight,yTop,xLeft,yBot,xRight,yBot,Global.getSettings().getMouseX(),Global.getSettings().getMouseY());
                     if(!hovers){
-                        ProductionUtil.getCoreUI().removeComponent(panelToInfluence);
+                        parent.removeComponent(panelToInfluence);
                         event.consume();
                         onExit();
                     }
@@ -482,7 +512,7 @@ public class PopUpUI implements CustomUIPanelPlugin {
                 if(!event.isConsumed()){
                     if(event.getEventValue()== Keyboard.KEY_ESCAPE){
                         if(attemptedExit){
-                            ProductionUtil.getCoreUI().removeComponent(panelToInfluence);
+                            parent.removeComponent(panelToInfluence);
                             event.consume();
                             onExit();
                             break;
@@ -500,7 +530,7 @@ public class PopUpUI implements CustomUIPanelPlugin {
 
     }
     public void forceDismiss(){
-        ProductionUtil.getCoreUI().removeComponent(panelToInfluence);
+        parent.removeComponent(panelToInfluence);
         onExit();
     }
     public void onExit(){
