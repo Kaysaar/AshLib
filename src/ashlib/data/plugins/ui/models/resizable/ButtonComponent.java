@@ -31,6 +31,10 @@ public class ButtonComponent extends ResizableComponent {
     boolean enableRightClick = false;
     boolean decreasedMode = true;
 
+    public void setMaxHighlight(float maxHighlight) {
+        this.maxHighlight = maxHighlight;
+    }
+
     public void setEnableRightClick(boolean enableRightClick) {
         this.enableRightClick = enableRightClick;
     }
