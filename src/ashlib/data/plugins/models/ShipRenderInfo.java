@@ -69,9 +69,6 @@ public class ShipRenderInfo {
     public ShipRenderInfo(String hullID, boolean isFighter) throws JSONException, IOException {
         this.hullId = hullID;
         JSONObject obj = null;
-        if(hullID.equals("atlas2_default_D")){
-            int a =2;
-        }
         obj = getShipJson(hullID);
         this.width = obj.getDouble("width");
         this.height = obj.getDouble("height");

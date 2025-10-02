@@ -1,5 +1,6 @@
 package ashlib.data.plugins.misc;
 
+import ashlib.data.plugins.ui.models.BasePopUpDialog;
 import ashlib.data.plugins.ui.models.PopUpUI;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.*;
@@ -50,6 +51,10 @@ public class AshMisc {
         }
 
         return variantId;
+    }
+    public static void initPopUpDialog(BasePopUpDialog dialog, float width, float height){
+        CustomPanelAPI panelAPI = Global.getSettings().createCustom(width, height, dialog);
+        dialog.init(panelAPI, (Global.getSettings().getScreenWidth()/2) - (panelAPI.getPosition().getWidth() / 2), (Global.getSettings().getScreenHeight()/2) + (panelAPI.getPosition().getHeight() / 2), true);
     }
     public static void placePopUpUI(PopUpUI ui, ButtonAPI button, float initWidth, float initHeight) {
 
