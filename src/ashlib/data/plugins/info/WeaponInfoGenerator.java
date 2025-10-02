@@ -478,7 +478,12 @@ public class WeaponInfoGenerator {
         renderer.setAnchor(panelAPI);
         return new Pair<>(panelAPI,renderer);
     }
-
+    public static Pair<CustomPanelAPI,WeaponSpriteRenderer> getImageOfWeaponNonInit(WeaponSpecAPI spec, float size) {
+        WeaponSpriteRenderer renderer = new WeaponSpriteRenderer(spec, size, 0);
+        CustomPanelAPI panelAPI = Global.getSettings().createCustom(size, size, null);
+        renderer.setAnchor(panelAPI);
+        return new Pair<>(panelAPI,renderer);
+    }
     public static CustomPanelAPI getImageOfDamage(float size, DamageType type, CustomPanelAPI parentPanel) {
         CustomPanelAPI panelOfImage = parentPanel.createCustomPanel(size, size, null);
         TooltipMakerAPI tooltip = panelOfImage.createUIElement(size, size, false);

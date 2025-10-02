@@ -31,15 +31,12 @@ public class ShipRenderInfoRepo {
 
     public static void populateShip(ShipHullSpecAPI allShipHullSpec) {
         try {
-            if(allShipHullSpec.getBaseHullId().equals("ass_arkship")){
+            if(allShipHullSpec.getBaseHullId().equals("station3")){
                 String test ="a";
 
             }
-            if(allShipHullSpec.getHullId().equals("vice_paragon_ai")){
-                String test ="a";
-            }
             ShipRenderInfo info = new ShipRenderInfo(allShipHullSpec.getBaseHullId(),false);
-            if(allShipHullSpec.getHints().contains(ShipHullSpecAPI.ShipTypeHints.SHIP_WITH_MODULES)){
+            if(allShipHullSpec.getHints().contains(ShipHullSpecAPI.ShipTypeHints.SHIP_WITH_MODULES)||allShipHullSpec.getHints().contains(ShipHullSpecAPI.ShipTypeHints.STATION)){
                 String variantId = getVaraint(allShipHullSpec);
                 if(variantId==null){
                     variantId = getVaraint(allShipHullSpec.getBaseHull());
@@ -62,9 +59,6 @@ public class ShipRenderInfoRepo {
             }
             renderInfoRepo.put(allShipHullSpec.getHullId(),info);
         } catch (Exception e) {
-            if(allShipHullSpec.getHullId().contains("cerberus")){
-                log.info("Hull id : "+ allShipHullSpec.getHullId()+" not loaded!");
-            }
             log.info("Hull id : "+ allShipHullSpec.getHullId()+" not loaded!");
         }
     }
