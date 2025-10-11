@@ -263,7 +263,7 @@ public class AshMisc {
         GL11.glColorMask(false, false, false, false);
         GL11.glEnable(GL11.GL_STENCIL_TEST);
 
-        GL11.glStencilFunc(GL11.GL_ALWAYS, 1, 0xff);
+        GL11.glStencilFunc(GL11.GL_ALWAYS, 40, 0xff);
         GL11.glStencilMask(0xff);
         GL11.glStencilOp(GL11.GL_REPLACE, GL11.GL_REPLACE, GL11.GL_REPLACE);
 
@@ -284,7 +284,7 @@ public class AshMisc {
         GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
         GL11.glColorMask(true, true, true, true);
 
-        GL11.glStencilFunc(GL11.GL_EQUAL, 1, 0xFF);
+        GL11.glStencilFunc(GL11.GL_EQUAL, 40, 0xFF);
     }
     public static void startStencilWithYPad(CustomPanelAPI panel,float yPad) {
         GL11.glClearStencil(0);

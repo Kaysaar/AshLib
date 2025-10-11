@@ -10,5 +10,6 @@
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="library" name="LazyLib" level="project" />
     <orderEntry type="library" name="commons-compiler-jdk" level="project" />
+    <orderEntry type="library" name="Vok" level="project" />
   </component>
 </module>
