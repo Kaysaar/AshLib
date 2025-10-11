@@ -99,6 +99,8 @@ public class ZoomPanelComponent implements CustomUIPanelPlugin {
             }
         }
     }
+
+
     public void sentToBottomComponentsOfClass(Class componentClass) {
         mainPanel.removeComponent(mainPanelBlockerPlugin);
         ArrayList<ResizableComponent> componentsToReAddLater = new ArrayList<>();
@@ -270,6 +272,12 @@ public class ZoomPanelComponent implements CustomUIPanelPlugin {
     @Override
     public void buttonPressed(Object buttonId) {
         // No-op.
+    }
+    public void clearUI(){
+        for (ResizableComponent resizableComponent : resizableComponents) {
+            resizableComponent.clearUI();
+        }
+        this.resizableComponents.clear();
     }
     /** Center a world point in the center of THIS zoom panel (mainPanel). */
     public void centerOnWorld(float worldX, float worldY) {

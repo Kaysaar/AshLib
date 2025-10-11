@@ -1,0 +1,10 @@
+package ashlib.data.plugins.ui.models.resizable.map;
+
+import ashlib.data.plugins.ui.models.resizable.ResizableComponent;
+import com.fs.starfarer.api.Global;
+
+public class MapCornerComponent extends ResizableComponent {
+    public MapCornerComponent() {
+        componentPanel = Global.getSettings().createCustom(1, 1, this);
+    }
+}
