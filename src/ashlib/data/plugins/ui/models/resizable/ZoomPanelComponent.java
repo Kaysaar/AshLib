@@ -127,7 +127,7 @@ public class ZoomPanelComponent implements CustomUIPanelPlugin {
         data.maxOffsetY = y;
         data.maxOffsetX = x;
         this.minScale = width/x;
-        if(height/y<=minScale){
+        if(height/y>=minScale){
             this.minScale = height/y;
         }
         data.scale = scale;
@@ -147,6 +147,15 @@ public class ZoomPanelComponent implements CustomUIPanelPlugin {
     @Override
     public void render(float alphaMult) {
 
+    }
+    /** Pixels per world unit along X. */
+    public float getWorldXtoScreenX() {
+        return 1;
+    }
+
+    /** Pixels per world unit along Y. */
+    public float getWorldYtoScreenY() {
+        return 1f;
     }
 
     @Override
@@ -241,7 +250,19 @@ public class ZoomPanelComponent implements CustomUIPanelPlugin {
         float uiY = worldY * data.scale - (data.getCurrentOffsetY()*currScale);
         return new Vector2f(uiX, uiY);
     }
-
+    public float getMouseX(){
+        PositionAPI panelPos = mainPanel.getPosition();
+        float panelX = panelPos.getX();
+        return Global.getSettings().getMouseX() - panelX;
+    }
+    public float getMouseY(){
+        PositionAPI panelPos = mainPanel.getPosition();
+        float panelYTop = convertYBLtoYTL(panelPos.getY() + panelPos.getHeight());
+        return  convertYBLtoYTL(Global.getSettings().getMouseY()) - panelYTop;
+    }
+    public Vector2f calculateMouseToWorldCords(){
+        return calculateWorldCoords(getMouseX(),getMouseY());
+    }
     private float convertYBLtoYTL(float screenY) {
         return Global.getSettings().getScreenHeight() - screenY;
     }
@@ -250,4 +271,39 @@ public class ZoomPanelComponent implements CustomUIPanelPlugin {
     public void buttonPressed(Object buttonId) {
         // No-op.
     }
+    /** Center a world point in the center of THIS zoom panel (mainPanel). */
+    public void centerOnWorld(float worldX, float worldY) {
+        centerOnWorldInPanel(mainPanel, worldX, worldY);
+    }
+    public void centerOnWorld(Vector2f world) {
+        centerOnWorld(world.x, world.y);
+    }
+
+    /** Center a world point in the CENTER of the given panel (its visible rect). */
+    public void centerOnWorldInPanel(CustomPanelAPI panel, float worldX, float worldY) {
+        // Target UI point = center of the given panel, in THIS panel’s local coords
+        PositionAPI p = panel.getPosition();
+        float targetUIX = p.getCenterX();
+        float targetUIY = p.getCenterY();
+
+        float s  = data.scale;    // world → UI scale
+        float cs = currScale;     // offsets multiplied by currScale in your math
+
+        // From calculateUICords:
+        //   uiX = worldX * s + (offX * cs)
+        //   uiY = worldY * s - (offY * cs)
+        // Solve for offsets so (worldX,worldY) maps to (targetUIX,targetUIY)
+        float newOffX = (targetUIX - (worldX * s)) / cs;
+        float newOffY = ((worldY * s) - targetUIY) / cs;
+
+        data.setCurrentOffsetX(newOffX);
+        data.setCurrentOffsetY(newOffY);
+    }
+
+    /** Overload for Vector2f. */
+    public void centerOnWorldInPanel(Vector2f world) {
+        centerOnWorldInPanel(getPluginPanel(), world.x, world.y);
+    }
+
+
 }

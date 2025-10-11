@@ -1,9 +1,17 @@
 package ashlib.data.plugins.ui.models.resizable;
 
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.campaign.CustomUIPanelPlugin;
 import com.fs.starfarer.api.graphics.SpriteAPI;
+import com.fs.starfarer.api.input.InputEventAPI;
+import com.fs.starfarer.api.ui.CustomPanelAPI;
+import com.fs.starfarer.api.ui.PositionAPI;
+import com.fs.starfarer.api.ui.UIComponentAPI;
+import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ImageViewer extends ResizableComponent {
         public SpriteAPI spriteOfImage;
@@ -35,4 +43,5 @@ public class ImageViewer extends ResizableComponent {
             spriteOfImage.renderAtCenter(componentPanel.getPosition().getCenterX(), componentPanel.getPosition().getCenterY());
         }
     }
+
 
