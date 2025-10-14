@@ -449,9 +449,7 @@ public class AshMisc {
 
         GL11.glStencilFunc(GL11.GL_EQUAL, 1, 0xFF);
     }
-    public static void endStencil() {
-        GL11.glDisable(GL11.GL_STENCIL_TEST);
-    }
+
     public static String[] splitAndClean(String input) {
         // Convert to lowercase to make the search case-insensitive
         String lowerCaseInput = input.toLowerCase();
@@ -562,19 +560,6 @@ public class AshMisc {
         return dp[a.length()][b.length()];
     }
 
-    public static String getType(ShipHullSpecAPI ship) {
-        if (ship.isPhase()) {
-            return "Phase";
-        }
-        ShipVariantAPI spec = Global.getSettings().getVariant(getVaraint(ship));
-        if (spec.isCivilian()) {
-            return "Civilian";
-        }
-        if (spec.isCarrier()) {
-            return "Carrier";
-        }
-        return "Warship";
-    }
 
     public static String getType(FighterWingSpecAPI wing) {
         WingRole role = wing.getRole();
@@ -643,4 +628,63 @@ public class AshMisc {
         }
         return String.format("%.1f", number);
     }
+
+
+
+
+
+    public static void startStencil(CustomPanelAPI panel,float scale) {
+        GL11.glClearStencil(0);
+        GL11.glStencilMask(0xff);
+        GL11.glClear(GL11.GL_STENCIL_BUFFER_BIT);
+
+        GL11.glColorMask(false, false, false, false);
+        GL11.glEnable(GL11.GL_STENCIL_TEST);
+
+        GL11.glStencilFunc(GL11.GL_ALWAYS, 1, 0xff);
+        GL11.glStencilMask(0xff);
+        GL11.glStencilOp(GL11.GL_REPLACE, GL11.GL_REPLACE, GL11.GL_REPLACE);
+
+        GL11.glBegin(GL11.GL_POLYGON);
+        PositionAPI position = panel.getPosition();
+        float x = position.getX();
+        float y = position.getY();
+        float width = position.getWidth();
+        float height = position.getHeight();
+
+        // Define the rectangle
+        GL11.glVertex2f(x, y);
+        GL11.glVertex2f(x + width, y);
+        GL11.glVertex2f(x + width, y + height*scale);
+        GL11.glVertex2f(x, y + height*scale);
+        GL11.glEnd();
+
+        GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
+        GL11.glColorMask(true, true, true, true);
+
+        GL11.glStencilFunc(GL11.GL_EQUAL, 1, 0xFF);
+    }
+
+
+
+    public static void endStencil() {
+        GL11.glDisable(GL11.GL_STENCIL_TEST);
+    }
+
+
+    public static String getType(ShipHullSpecAPI ship) {
+        if (ship.isPhase()) {
+            return "Phase";
+        }
+        ShipVariantAPI spec = Global.getSettings().getVariant(getVaraint(ship));
+        if (spec.isCivilian()) {
+            return "Civilian";
+        }
+        if (spec.isCarrier()) {
+            return "Carrier";
+        }
+        return "Warship";
+    }
+
+
 }
