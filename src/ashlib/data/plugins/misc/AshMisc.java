@@ -69,6 +69,28 @@ public class AshMisc {
         CustomPanelAPI panelAPI = Global.getSettings().createCustom(width, height, dialog);
         dialog.init(panelAPI, (Global.getSettings().getScreenWidth()/2) - (panelAPI.getPosition().getWidth() / 2), (Global.getSettings().getScreenHeight()/2) + (panelAPI.getPosition().getHeight() / 2), true);
     }
+    public static void placePopUpUI(PopUpUI ui, ButtonAPI component, float initWidth, float initHeight) {
+
+        float width1 = initWidth;
+        float height1 = ui.createUIMockup(Global.getSettings().createCustom(initWidth, initHeight, null));
+        CustomPanelAPI panelAPI = Global.getSettings().createCustom(width1, height1, ui);
+
+        float x = component.getPosition().getX() + component.getPosition().getWidth();
+        float y = component.getPosition().getY() + component.getPosition().getHeight();
+        if (x + width1 >= Global.getSettings().getScreenWidth()) {
+            float diff = x + width1 - Global.getSettings().getScreenWidth();
+            x = x - diff - 5;
+
+        }
+        if (y - height1 <= 0) {
+            y = height1;
+        }
+        if (y > Global.getSettings().getScreenHeight()) {
+            y = Global.getSettings().getScreenHeight() - 10;
+        }
+
+        ui.init(panelAPI, x, y, false);
+    }
     public static void placePopUpUI(PopUpUI ui, UIComponentAPI component, float initWidth, float initHeight) {
 
         float width1 = initWidth;
