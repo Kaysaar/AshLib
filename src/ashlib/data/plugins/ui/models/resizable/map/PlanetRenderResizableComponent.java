@@ -1,10 +1,12 @@
 package ashlib.data.plugins.ui.models.resizable.map;
 
+import ashlib.data.plugins.misc.AshMisc;
 import ashlib.data.plugins.ui.models.resizable.ResizableComponent;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.BaseCustomUIPanelPlugin;
 import com.fs.starfarer.api.campaign.PlanetAPI;
 import com.fs.starfarer.api.ui.CustomPanelAPI;
+import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.combat.CombatViewport;
 import com.fs.starfarer.combat.entities.terrain.Planet;
 import data.kaysaar.aotd.vok.campaign.econ.globalproduction.impl.nidavelir.NidavelirComplexMegastructure;
@@ -26,27 +28,20 @@ public class PlanetRenderResizableComponent extends MapEntityComponent {
                                     float surfaceAngle, float atmoAngle, float alpha, boolean isStar,
                                     float tilt, float scale) {
 
-        CustomPanelAPI p1 = Global.getSettings().createCustom(0, 0, new BaseCustomUIPanelPlugin() {
-            @Override
-            public void render(float alphaMult) {
-                CombatViewport vv = new CombatViewport(point.x, point.y, 200, 200);
-                vv.setAlphaMult(alpha);
+        CombatViewport vv = new CombatViewport(point.x, point.y, 200, 200);
+        vv.setAlphaMult(alpha);
 
-                Planet planet = new Planet(spec, size, 0, point);
-                planet.setScale(scale);
-                planet.setRadius(size);
-                planet.setAngle(surfaceAngle);
-                planet.setCloudAngle(atmoAngle);
-                planet.setFacing(facing - 90f);
-                planet.setTilt(tilt);
-                planet.setPitch(pitch);
+        Planet planet = new Planet(spec, size, 0, point);
+        planet.setScale(scale);
+        planet.setRadius(size);
+        planet.setAngle(surfaceAngle);
+        planet.setCloudAngle(atmoAngle);
+        planet.setFacing(facing - 90f);
+        planet.setTilt(tilt);
+        planet.setPitch(pitch);
 
-                planet.renderSphere(vv);
-                planet.renderStarGlow(vv);
-            }
-        });
-        p1.getPosition().setLocation(point.getX(), point.getY());
-        p1.render(alpha);
+        planet.renderSphere(vv);
+        planet.renderStarGlow(vv);
     }
 
     public PlanetRenderResizableComponent(float size, String type, boolean isStar) {
@@ -73,7 +68,13 @@ public class PlanetRenderResizableComponent extends MapEntityComponent {
         float cx = componentPanel.getPosition().getCenterX();
         float cy = componentPanel.getPosition().getCenterY();
 
-        // If undiscovered and not a star: draw a simple gray circle placeholder.
+
+            renderImpl(alphaMult, cx, cy);
+
+
+    }
+
+    private void renderImpl(float alphaMult, float cx, float cy) {
         if (!discovered && !isStar) {
             drawPlaceholderCircle(cx, cy, originalSize * scale, alphaMult);
             return;
@@ -133,6 +134,8 @@ public class PlanetRenderResizableComponent extends MapEntityComponent {
                 }
             }
         }
+
+        super.render(alphaMult);
     }
 
     @Override
@@ -145,7 +148,13 @@ public class PlanetRenderResizableComponent extends MapEntityComponent {
             angle -= 360f;
         }
     }
-
+    public float getHaloRadius(PlanetAPI planet){
+        float rad = Math.max(planet.getRadius()*planet.getSpec().getAtmosphereThickness(),planet.getSpec().getAtmosphereThicknessMin()+planet.getRadius());
+        if(planet.isStar()){
+            rad = planet.getRadius()*planet.getSpec().getCoronaSize();
+        }
+        return rad;
+    }
     // --- Helpers -------------------------------------------------------------
 
     /** Draws a simple filled gray circle as a placeholder for undiscovered non-star planets. */

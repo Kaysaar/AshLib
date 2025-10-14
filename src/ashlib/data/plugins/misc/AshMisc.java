@@ -52,18 +52,31 @@ public class AshMisc {
 
         return variantId;
     }
+    public static String getSurveyString(MarketAPI.SurveyLevel level){
+        String ret = "";
+        if(level.equals(MarketAPI.SurveyLevel.SEEN)){
+            return "Unsurveyed";
+        }
+        if(level.equals(MarketAPI.SurveyLevel.PRELIMINARY)){
+            return "Preliminary survey complete";
+        }
+        if(level.equals(MarketAPI.SurveyLevel.FULL)){
+            return "Surveyed";
+        }
+        return ret;
+    }
     public static void initPopUpDialog(BasePopUpDialog dialog, float width, float height){
         CustomPanelAPI panelAPI = Global.getSettings().createCustom(width, height, dialog);
         dialog.init(panelAPI, (Global.getSettings().getScreenWidth()/2) - (panelAPI.getPosition().getWidth() / 2), (Global.getSettings().getScreenHeight()/2) + (panelAPI.getPosition().getHeight() / 2), true);
     }
-    public static void placePopUpUI(PopUpUI ui, ButtonAPI button, float initWidth, float initHeight) {
+    public static void placePopUpUI(PopUpUI ui, UIComponentAPI component, float initWidth, float initHeight) {
 
         float width1 = initWidth;
         float height1 = ui.createUIMockup(Global.getSettings().createCustom(initWidth, initHeight, null));
         CustomPanelAPI panelAPI = Global.getSettings().createCustom(width1, height1, ui);
 
-        float x = button.getPosition().getX() + button.getPosition().getWidth();
-        float y = button.getPosition().getY() + button.getPosition().getHeight();
+        float x = component.getPosition().getX() + component.getPosition().getWidth();
+        float y = component.getPosition().getY() + component.getPosition().getHeight();
         if (x + width1 >= Global.getSettings().getScreenWidth()) {
             float diff = x + width1 - Global.getSettings().getScreenWidth();
             x = x - diff - 5;
@@ -255,7 +268,47 @@ public class AshMisc {
     public static boolean isStringValid(String str){
         return str!=null&&!str.isEmpty();
     }
-    public static void startStencil(CustomPanelAPI panel,float scale) {
+    public static void prepareStencilMaskToBeDrawnOn(int ref) {
+        // Optional: save state if you want to be tidy
+        // GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_COLOR_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT);
+
+        // Clear to 0 so only places we paint become 'ref'
+        GL11.glClearStencil(0);
+        GL11.glStencilMask(0xFF);
+        GL11.glClear(GL11.GL_STENCIL_BUFFER_BIT);
+
+        // We’re going to WRITE the mask now
+        GL11.glEnable(GL11.GL_STENCIL_TEST);
+        GL11.glStencilFunc(GL11.GL_ALWAYS, ref, 0xFF);           // every fragment passes
+        GL11.glStencilOp(GL11.GL_REPLACE, GL11.GL_REPLACE, GL11.GL_REPLACE); // write 'ref'
+        GL11.glStencilMask(0xFF);                                 // allow stencil writes
+
+        // Don’t touch the color buffer while building the mask
+        GL11.glColorMask(false, false, false, false);
+
+        // Only count non-transparent pixels as mask (important for sprites)
+        GL11.glEnable(GL11.GL_ALPHA_TEST);
+        GL11.glAlphaFunc(GL11.GL_GREATER, 0.0f);                 // pass if alpha > 0
+    }
+
+    public static void endPreparationForStencil(int ref) {
+        // Stop modifying stencil; from now on, only draw where stencil == ref
+        GL11.glAlphaFunc(GL11.GL_ALWAYS, 0f);                    // reset alpha test func
+        GL11.glDisable(GL11.GL_ALPHA_TEST);
+
+        GL11.glColorMask(true, true, true, true);                // restore color writes
+        GL11.glStencilFunc(GL11.GL_EQUAL, ref, 0xFF);            // draw only where mask written
+        GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP); // never change stencil
+        GL11.glStencilMask(0x00);                                // lock the stencil buffer
+    }
+
+    public static void endStencilAfterAll() {
+        GL11.glDisable(GL11.GL_STENCIL_TEST);
+        // If you used glPushAttrib above, also pop:
+        // GL11.glPopAttrib();
+    }
+
+    public static void startStencil(CustomPanelAPI panel,float scale,int ref) {
         GL11.glClearStencil(0);
         GL11.glStencilMask(0xff);
         GL11.glClear(GL11.GL_STENCIL_BUFFER_BIT);
@@ -263,7 +316,7 @@ public class AshMisc {
         GL11.glColorMask(false, false, false, false);
         GL11.glEnable(GL11.GL_STENCIL_TEST);
 
-        GL11.glStencilFunc(GL11.GL_ALWAYS, 40, 0xff);
+        GL11.glStencilFunc(GL11.GL_ALWAYS, ref, 0xff);
         GL11.glStencilMask(0xff);
         GL11.glStencilOp(GL11.GL_REPLACE, GL11.GL_REPLACE, GL11.GL_REPLACE);
 
@@ -284,7 +337,7 @@ public class AshMisc {
         GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
         GL11.glColorMask(true, true, true, true);
 
-        GL11.glStencilFunc(GL11.GL_EQUAL, 40, 0xFF);
+        GL11.glStencilFunc(GL11.GL_EQUAL, ref, 0xFF);
     }
     public static void startStencilWithYPad(CustomPanelAPI panel,float yPad) {
         GL11.glClearStencil(0);

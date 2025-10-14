@@ -23,8 +23,8 @@ public class EntityRendererComponent  extends MapEntityComponent{
     /** base visual radius for the orbit ring (in px, at scale=1). default: use panel radius */
     public float orbitRadiusPx = -1f;
     /** appearance */
-    public Color orbitColor = new Color(126, 126, 126, 180);
-    public float orbitLineWidth = 1f;
+    public static Color orbitColor = new Color(126, 126, 126, 180);
+    public static float orbitLineWidth = 1f;
     public float facing ;
     /** panel radius you passed in (used if orbitRadiusPx < 0) */
     float radius;
@@ -78,6 +78,7 @@ public class EntityRendererComponent  extends MapEntityComponent{
         float baseR = radius;
         float orbitR = baseR * scale; // respect zoom from ResizableComponent
         drawOrbit(center, orbitR, orbitColor, orbitLineWidth, alphaMult);
+        super.render(alphaMult);
     }
 
     // --- station rendering (your existing logic, unchanged except naming) ---
@@ -132,7 +133,7 @@ public class EntityRendererComponent  extends MapEntityComponent{
 
     // --- OpenGL orbit ring ---
 
-    private static void drawOrbit(Vector2f center, float radiusPx, Color color, float lineWidth, float alpha) {
+    public static void drawOrbit(Vector2f center, float radiusPx, Color color, float lineWidth, float alpha) {
         if (radiusPx <= 0f) return;
 
         final int segments = Math.max(32, Math.min(512, (int) (2 * Math.PI * radiusPx / 4f)));

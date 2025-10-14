@@ -109,7 +109,7 @@ public class ShipRenderer implements CustomUIPanelPlugin {
 //        }
         if (!canRender()) return;
         if(isUsingStencil){
-            AshMisc.startStencil(stencilMaskBorder,renderingPercentage);
+            AshMisc.startStencil(stencilMaskBorder,renderingPercentage,30);
         }
         for (Map.Entry<CustomPanelAPI, ShipRenderInfo.Module> entry : partsOfShip.entrySet()) {
             SpriteAPI sprite = Global.getSettings().getSprite(Global.getSettings().getHullSpec(entry.getValue().slotOnOriginal.id).getSpriteName());

@@ -25,7 +25,7 @@ public class StencilBlockerPlugin implements CustomUIPanelPlugin {
 
     @Override
     public void render(float alphaMult) {
-        AshMisc.startStencil(panelToStencil,1f);
+        AshMisc.startStencil(panelToStencil,1f,80);
     }
 
     @Override
