@@ -18,7 +18,13 @@ public class StableLocationComponent extends MapEntityComponent {
     public void render(float alphaMult) {
         float iconSize = JumpPointRenderer.size;
         float trueIconSize = iconSize*scale;
+        float currAlpha = alphaMult;
+        if(!hooks.isEmpty()){
+            currAlpha = (0.8f+this.currHighlight)*alphaMult;
+
+        }
         sprite.setSize(trueIconSize, trueIconSize);
+        sprite.setAlphaMult(currAlpha);
         sprite.renderAtCenter(componentPanel.getPosition().getCenterX(),componentPanel.getPosition().getCenterY());
     }
 

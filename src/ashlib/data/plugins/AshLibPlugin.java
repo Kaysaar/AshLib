@@ -1,6 +1,7 @@
 package ashlib.data.plugins;
 
 import ashlib.data.plugins.handlers.AICoreSkillPollHandler;
+import ashlib.data.plugins.ui.template.TemplateDialogEveryFrameScript;
 import ashlib.data.scripts.AiCoreLevelUpHijacker;
 import ashlib.data.scripts.AshReplaceAISkills;;
 import com.fs.starfarer.api.BaseModPlugin;
@@ -24,5 +25,6 @@ public class AshLibPlugin extends BaseModPlugin {
         super.onGameLoad(newGame);
         Global.getSector().addTransientScript(new AshReplaceAISkills());
         Global.getSector().addTransientScript(new AiCoreLevelUpHijacker());
+//        Global.getSector().getListenerManager().addListener(new TemplateDialogEveryFrameScript(),true);
     }
 }

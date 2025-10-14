@@ -24,7 +24,12 @@ public class JumpPointRenderer extends MapEntityComponent {
     public void render(float alphaMult) {
         float size = JumpPointRenderer.size *scale;
         sprite.setSize(size,size);
-        sprite.setAlphaMult(alphaMult);
+        float currAlpha = alphaMult;
+        if(!hooks.isEmpty()){
+            currAlpha = (0.8f+this.currHighlight)*alphaMult;
+
+        }
+        sprite.setAlphaMult(currAlpha);
         sprite.renderAtCenter(componentPanel.getPosition().getCenterX(),componentPanel.getPosition().getCenterY());
     }
 }

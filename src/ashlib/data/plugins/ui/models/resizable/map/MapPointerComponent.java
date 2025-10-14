@@ -19,6 +19,15 @@ public class MapPointerComponent extends ResizableComponent {
     }
 
     boolean shouldRender = false;
+    boolean canRender = true;
+
+    public void setCanRender(boolean canRender) {
+        this.canRender = canRender;
+    }
+
+    public boolean shouldRender() {
+        return shouldRender;
+    }
 
     public void setShouldRender(boolean shouldRender) {
         this.shouldRender = shouldRender;
@@ -33,7 +42,7 @@ public class MapPointerComponent extends ResizableComponent {
 
     @Override
     public void render(float alphaMult) {
-        if (!shouldRender || !mainComponent.doesHover()) return;
+        if (!shouldRender || !mainComponent.doesHover()||!canRender) return;
 
         // style
         Color color = new Color(174, 192, 196, 180);

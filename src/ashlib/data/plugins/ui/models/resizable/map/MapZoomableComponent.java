@@ -29,5 +29,13 @@ public class MapZoomableComponent extends ZoomPanelComponent {
         }
         return null;
     }
+    public ResizableComponent getResizableComponentOfClass(Class<?> classOfComponent){
+        for (ResizableComponent resizableComponent : resizableComponents) {
+            if(resizableComponent.getClass().equals(classOfComponent)){
+                return resizableComponent;
+            }
+        }
+        return null;
+    }
 
 }

@@ -8,6 +8,8 @@ import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
 
+import static ashlib.data.plugins.ui.models.resizable.map.MapMainComponent.WORLD_X;
+
 public class AsteroidRenderer extends MapEntityComponent {
     SpriteAPI sprite;
     Color asteroidColor;
@@ -29,8 +31,8 @@ public class AsteroidRenderer extends MapEntityComponent {
 
     }
     public Vector2f translateCoordinatesToUI(Vector2f worldLocation) {
-        float uiX = worldLocation.x + 27000f;   // shift X so -27000 → 0, +27000 → 54000
-        float uiY = 27000f - worldLocation.y;   // invert Y so +27000 → 0 (top), -27000 → 54000 (bottom)
+        float uiX = worldLocation.x + WORLD_X;   // shift X so -27000 → 0, +27000 → 54000
+        float uiY = WORLD_X - worldLocation.y;   // invert Y so +27000 → 0 (top), -27000 → 54000 (bottom)
         return new Vector2f(uiX, uiY);
     }
 

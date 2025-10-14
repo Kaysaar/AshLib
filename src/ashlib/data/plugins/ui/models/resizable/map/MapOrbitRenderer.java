@@ -8,18 +8,16 @@ import org.lwjgl.util.vector.Vector2f;
 import java.awt.*;
 
 public class MapOrbitRenderer extends ResizableComponent {
-    private float radius;                 // world-space radius of the orbit
-    private Vector2f center = new Vector2f(0f, 0f); // world-space center
-    private Color color = new Color(120, 160, 200, 180);
-    private float lineWidth = 1f;         // base line width at scale=1
+     public float radius;                 // world-space radius of the orbit
+     public Vector2f center = new Vector2f(0f, 0f); // world-space center
+     public Color color = new Color(120, 160, 200, 180);
+     public  float lineWidth = 1f;         // base line width at scale=1
 
     public MapOrbitRenderer(float radius) {
         this.radius = radius;
         this.componentPanel = Global.getSettings().createCustom(1, 1, this);
     }
 
-    public void setCenter(Vector2f center) { this.center = center; }
-    public void setColor(Color color) { this.color = color; }
     public void setLineWidth(float lineWidth) { this.lineWidth = lineWidth; }
     public void setRadius(float radius) { this.radius = radius; }
 

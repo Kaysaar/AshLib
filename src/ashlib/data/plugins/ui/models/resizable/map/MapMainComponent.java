@@ -1,5 +1,6 @@
 package ashlib.data.plugins.ui.models.resizable.map;
 
+import ashlib.data.plugins.misc.AshMisc;
 import ashlib.data.plugins.ui.models.ExtendedUIPanelPlugin;
 import ashlib.data.plugins.ui.models.TrapezoidButtonDetector;
 import ashlib.data.plugins.ui.models.resizable.ResizableComponent;
@@ -7,7 +8,11 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.*;
 import com.fs.starfarer.api.campaign.econ.MarketAPI;
 import com.fs.starfarer.api.fleet.FleetMemberAPI;
+import com.fs.starfarer.api.impl.campaign.CampaignObjective;
+import com.fs.starfarer.api.impl.campaign.GenericFieldItemManager;
+import com.fs.starfarer.api.impl.campaign.SupplyCacheEntityPlugin;
 import com.fs.starfarer.api.impl.campaign.ids.Entities;
+import com.fs.starfarer.api.impl.campaign.ids.Factions;
 import com.fs.starfarer.api.impl.campaign.ids.Tags;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.ui.CustomPanelAPI;
@@ -23,6 +28,7 @@ import java.util.List;
 
 public class MapMainComponent implements ExtendedUIPanelPlugin {
 
+    public static final int WORLD_X = 26000;
     // --- Panels / core ---
     CustomPanelAPI mainPanel;
     CustomPanelAPI contentPanel;
@@ -33,32 +39,57 @@ public class MapMainComponent implements ExtendedUIPanelPlugin {
     MouseFollowerComponent follower;
     TrapezoidButtonDetector detector = new TrapezoidButtonDetector();
     MapPointerComponent pointer;
+
+    public MapPointerComponent getPointer() {
+        return pointer;
+    }
+
+    public MouseFollowerComponent getFollower() {
+        return follower;
+    }
+    public void blockFullyPointer(){
+        pointer.setCanRender(false);
+    }
+    public void unblockFullyPointer(){
+        pointer.setCanRender(true);
+    }
     MapCornerComponent leftTop, leftBottom, rightTop, rightBottom, center;
-    boolean pointerMode = false;
 
     private static final Logger log = Global.getLogger(MapMainComponent.class);
 
     // --- Accessors for corners (kept) ---
-    public MapCornerComponent getLeftBottom() { return leftBottom; }
-    public MapCornerComponent getLeftTop() { return leftTop; }
-    public MapCornerComponent getRightBottom() { return rightBottom; }
-    public MapCornerComponent getRightTop() { return rightTop; }
+    public MapCornerComponent getLeftBottom() {
+        return leftBottom;
+    }
 
+    public MapCornerComponent getLeftTop() {
+        return leftTop;
+    }
+
+    public MapCornerComponent getRightBottom() {
+        return rightBottom;
+    }
+
+    public MapCornerComponent getRightTop() {
+        return rightTop;
+    }
+    StarSystemAPI system;
     // ========================================================================
     // Constructor
     // ========================================================================
-    public MapMainComponent(float width, float height) {
+    public MapMainComponent(float width, float height,StarSystemAPI system) {
         mainPanel = Global.getSettings().createCustom(width, height, this);
 
         mapZoom = new MapZoomableComponent(
                 mainPanel.getPosition().getWidth(),
                 mainPanel.getPosition().getHeight(),
-                54000, 54000,
+                WORLD_X*2, WORLD_X*2,
                 1f
         );
         mapZoom.startStencil();
         mapZoom.endStencil();
-        mapZoom.setCurrScale(mapZoom.minScale*2);
+        mapZoom.setCurrScale(mapZoom.minScale * 2);
+        this.system = system;
 
         buildUI(width, height);
     }
@@ -69,19 +100,18 @@ public class MapMainComponent implements ExtendedUIPanelPlugin {
     private void buildUI(float width, float height) {
         beforeBuild();
 
-        StarSystemAPI system = Global.getSector().getPlayerFleet().getStarSystem();
 
         addWorldAnchors();
         addGrid();
 
         if (system != null) {
-            if(!Misc.getMinSystemSurveyLevel(system).equals(MarketAPI.SurveyLevel.NONE)){
+            if (!Misc.getMinSystemSurveyLevel(system).equals(MarketAPI.SurveyLevel.NONE)) {
                 addOrbits(system);
+                addTerrains(system);
                 addJumpPoints(system);
             }
             addPlanets(system);
-            if(!Misc.getMinSystemSurveyLevel(system).equals(MarketAPI.SurveyLevel.NONE)){
-                addTerrains(system);
+            if (!Misc.getMinSystemSurveyLevel(system).equals(MarketAPI.SurveyLevel.NONE)) {
                 addCustomEntities(system);
                 addAsteroids(system);
             }
@@ -95,7 +125,7 @@ public class MapMainComponent implements ExtendedUIPanelPlugin {
         mainPanel.addComponent(contentPanel).inTL(0, 0);
 
         // start centered on world
-        mapZoom.centerOnWorld(27000, 27000);
+        mapZoom.centerOnWorld(WORLD_X, WORLD_X);
 
         afterBuild();
     }
@@ -104,17 +134,17 @@ public class MapMainComponent implements ExtendedUIPanelPlugin {
     private void addWorldAnchors() {
         beforeAddCorners();
 
-        leftTop     = new MapCornerComponent();
-        leftBottom  = new MapCornerComponent();
-        rightTop    = new MapCornerComponent();
+        leftTop = new MapCornerComponent();
+        leftBottom = new MapCornerComponent();
+        rightTop = new MapCornerComponent();
         rightBottom = new MapCornerComponent();
-        center      = new MapCornerComponent();
+        center = new MapCornerComponent();
 
         mapZoom.addComponent(leftTop, 0, 0);
         mapZoom.addComponent(leftBottom, 0, 54000);
         mapZoom.addComponent(rightTop, 54000, 0);
         mapZoom.addComponent(rightBottom, 54000, 54000);
-        mapZoom.addComponent(center, 27000, 27000);
+        mapZoom.addComponent(center, WORLD_X, WORLD_X);
 
         afterAddCorners();
     }
@@ -152,6 +182,12 @@ public class MapMainComponent implements ExtendedUIPanelPlugin {
 
         for (SectorEntityToken jumpPoint : system.getJumpPoints()) {
             JumpPointRenderer renderer = new JumpPointRenderer((JumpPointAPI) jumpPoint);
+            addTooltipTo(renderer, new MapTooltipComponent() {
+                @Override
+                public void createTooltip(TooltipMakerAPI tooltip, boolean expanded, Object tooltipParam) {
+                    tooltip.addPara(jumpPoint.getName(), 2f);
+                }
+            }, TooltipMakerAPI.TooltipLocation.RIGHT, false);
             Vector2f newLocation = translateCoordinatesToUI(jumpPoint.getLocation());
             mapZoom.addComponent(renderer,
                     newLocation.x - (JumpPointRenderer.size / 2),
@@ -166,17 +202,41 @@ public class MapMainComponent implements ExtendedUIPanelPlugin {
 
         for (SectorEntityToken token : system.getAllEntities()) {
             if (!(token instanceof PlanetAPI planet)) continue;
-            PlanetRenderResizableComponent comp = new PlanetRenderResizableComponent(planet,!Misc.getMinSystemSurveyLevel(system).equals(MarketAPI.SurveyLevel.NONE));
+            PlanetRenderResizableComponent comp = new PlanetRenderResizableComponent(planet, !Misc.getMinSystemSurveyLevel(system).equals(MarketAPI.SurveyLevel.NONE));
+            if (!Misc.getMinSystemSurveyLevel(system).equals(MarketAPI.SurveyLevel.NONE) || planet.isBlackHole() || planet.isStar()) {
+                addTooltipTo(comp, new MapTooltipComponent() {
+                    @Override
+                    public void createTooltip(TooltipMakerAPI tooltip, boolean expanded, Object tooltipParam) {
+                        if (token.getMarket() != null && token.getMarket().getFaction() != null && !token.getFaction().getId().equals(Factions.NEUTRAL)) {
+                            boolean isMilitary = Misc.isMilitary(token.getMarket());
+                            String name = token.getMarket().getName() + " - " + token.getMarket().getFaction().getDisplayName();
+                            if (isMilitary) {
+                                name += " (military)";
+                            }
+                            name += " (size " + token.getMarket().getSize() + ")";
+                            tooltip.addPara(name, token.getMarket().getFaction().getBaseUIColor(), 2f);
+                            tooltip.addPara(planet.getTypeNameWithWorld(), planet.getSpec().getIconColor(), 2f);
 
-            TooltipMakerAPI tooltip = comp.getTooltipOnHoverPanel().createUIElement(1, 1, false);
-            tooltip.addTooltipTo(new TooltipMakerAPI.TooltipCreator() {
-                @Override public boolean isTooltipExpandable(Object tooltipParam) { return false; }
-                @Override public float getTooltipWidth(Object tooltipParam) { return 400; }
-                @Override public void createTooltip(TooltipMakerAPI tt, boolean expanded, Object tooltipParam) {
-                    tt.addPara(planet.getName() + ", " + planet.getTypeNameWithWorldLowerCase(),
-                            planet.getSpec().getIconColor(), 2f);
-                }
-            }, comp.getTooltipOnHoverPanel(), TooltipMakerAPI.TooltipLocation.RIGHT);
+                        } else {
+                            tooltip.addPara(planet.getName() + ", " + planet.getTypeNameWithWorldLowerCase(),
+                                    planet.getSpec().getIconColor(), 2f);
+                            if (!planet.isStar() && !planet.isBlackHole()) {
+                                tooltip.addPara(AshMisc.getSurveyString(planet.getMarket().getSurveyLevel()), 2f);
+                            }
+
+                        }
+
+                    }
+                }, TooltipMakerAPI.TooltipLocation.RIGHT, false);
+
+            } else {
+                addTooltipTo(comp, new MapTooltipComponent() {
+                    @Override
+                    public void createTooltip(TooltipMakerAPI tooltip, boolean expanded, Object tooltipParam) {
+                        tooltip.addPara("Unknown...", 2f);
+                    }
+                }, TooltipMakerAPI.TooltipLocation.RIGHT, false);
+            }
 
             Vector2f ui = translateCoordinatesToUI(planet.getLocation());
             mapZoom.addComponent(comp, ui.x - planet.getRadius(), ui.y - planet.getRadius());
@@ -193,7 +253,7 @@ public class MapMainComponent implements ExtendedUIPanelPlugin {
             if (token instanceof CampaignTerrainAPI terrain) {
                 TerrainRenderV2 renderer = new TerrainRenderV2(terrain, mapZoom);
                 // tiled terrain manages its own internal positioning; bind to world center
-                mapZoom.addComponent(renderer, 27000, 27000);
+                mapZoom.addComponent(renderer, WORLD_X, WORLD_X);
             }
         }
 
@@ -202,16 +262,58 @@ public class MapMainComponent implements ExtendedUIPanelPlugin {
 
     private void addCustomEntities(StarSystemAPI system) {
         beforeAddCustomEntities();
+        for (CampaignFleetAPI fleet : system.getFleets()) {
+            if(fleet.isStationMode()&&!fleet.isHidden()&&fleet.isVisibleToPlayerFleet()){
+                FleetMemberAPI member = fleet.getFleetData().getMembersListCopy()
+                        .stream().filter(FleetMemberAPI::isStation).findFirst().orElse(null);
+                if (member == null) continue;
 
+                EntityRendererComponent comp = new EntityRendererComponent(
+                        member.getVariant(),
+                        fleet.getRadius(),
+                        fleet.getFacing(),
+                        fleet
+                );
+                addTooltipTo(comp, new MapTooltipComponent() {
+                    @Override
+                    public void createTooltip(TooltipMakerAPI tooltip, boolean expanded, Object tooltipParam) {
+                        tooltip.addPara(fleet.getNameWithFaction(),fleet.getFaction().getBaseUIColor(),2f);
+                    }
+                }, TooltipMakerAPI.TooltipLocation.RIGHT, false);
+                Vector2f ui = translateCoordinatesToUI(fleet.getLocation());
+                mapZoom.addComponent(comp, ui.x - fleet.getRadius(), ui.y - fleet.getRadius());
+                comp.scale = mapZoom.currScale;
+            }
+        }
         for (CustomCampaignEntityAPI token : system.getCustomEntities()) {
             if (token.getCustomEntitySpec().getId().equals(Entities.WRECK)) continue;
-            if(token.hasSensorProfile()) continue;
+            if (token.hasSensorProfile()) continue;
             // Stable location
+            if((token.getCustomPlugin() instanceof SupplyCacheEntityPlugin)||(token.getCustomPlugin() instanceof CargoPodsRendererPlugin)){
+                CargoPodsRendererPlugin plugin = new CargoPodsRendererPlugin(token);
+                Vector2f ui = translateCoordinatesToUI(token.getLocation());
+                addTooltipTo(plugin, new MapTooltipComponent() {
+                    @Override
+                    public void createTooltip(TooltipMakerAPI tooltip, boolean expanded, Object tooltipParam) {
+                        tooltip.addPara(token.getName(),Misc.getGrayColor(), 2f);
+                    }
+                }, TooltipMakerAPI.TooltipLocation.RIGHT, false);
+                mapZoom.addComponent(plugin, ui.x - token.getRadius(), ui.y - token.getRadius());
+                plugin.scale = mapZoom.currScale;
+                continue;
+            }
+
             if (token.getCustomEntitySpec().getId().equals(Entities.STABLE_LOCATION)) {
                 StableLocationComponent comp = new StableLocationComponent(token);
                 comp.scale = mapZoom.currScale;
+                addTooltipTo(comp, new MapTooltipComponent() {
+                    @Override
+                    public void createTooltip(TooltipMakerAPI tooltip, boolean expanded, Object tooltipParam) {
+                        tooltip.addPara("Stable Location", 2f);
+                    }
+                }, TooltipMakerAPI.TooltipLocation.RIGHT, false);
                 Vector2f ui = translateCoordinatesToUI(token.getLocation());
-                mapZoom.addComponent(comp, ui.x - (JumpPointRenderer.size/2), ui.y - (JumpPointRenderer.size/2));
+                mapZoom.addComponent(comp, ui.x - (JumpPointRenderer.size / 2), ui.y - (JumpPointRenderer.size / 2));
                 continue;
             }
 
@@ -228,15 +330,28 @@ public class MapMainComponent implements ExtendedUIPanelPlugin {
                         fleet.getFacing(),
                         token
                 );
+                addTooltipTo(comp, new MapTooltipComponent() {
+                    @Override
+                    public void createTooltip(TooltipMakerAPI tooltip, boolean expanded, Object tooltipParam) {
+                        if (token.getCustomPlugin() != null && token.getCustomPlugin().hasCustomMapTooltip()) {
+                            token.getCustomPlugin().createMapTooltip(tooltip, expanded);
+                        } else {
+                            if (token.getMarket() != null && token.getMarket().getFaction() != null) {
+                                boolean isMilitary = Misc.isMilitary(token.getMarket());
+                                String name = token.getMarket().getName() + " - " + token.getMarket().getFaction().getDisplayName();
+                                if (isMilitary) {
+                                    name += " (military)";
+                                }
+                                name += " (size " + token.getMarket().getSize() + ")";
+                                tooltip.addPara(name, token.getMarket().getFaction().getBaseUIColor(), 2f);
+                                if (token.hasTag(Tags.STATION)) {
+                                    tooltip.addPara("Orbital Station", 2f);
+                                }
 
-                TooltipMakerAPI tooltip = comp.getTooltipOnHoverPanel().createUIElement(1, 1, false);
-                tooltip.addTooltipTo(new TooltipMakerAPI.TooltipCreator() {
-                    @Override public boolean isTooltipExpandable(Object tooltipParam) { return false; }
-                    @Override public float getTooltipWidth(Object tooltipParam) { return 400; }
-                    @Override public void createTooltip(TooltipMakerAPI tt, boolean expanded, Object tooltipParam) {
-                        tt.addPara("Station", 2f);
+                            }
+                        }
                     }
-                }, comp.getTooltipOnHoverPanel(), TooltipMakerAPI.TooltipLocation.RIGHT);
+                }, TooltipMakerAPI.TooltipLocation.RIGHT, false);
 
                 Vector2f ui = translateCoordinatesToUI(token.getLocation());
                 mapZoom.addComponent(comp, ui.x - token.getRadius(), ui.y - token.getRadius());
@@ -256,6 +371,51 @@ public class MapMainComponent implements ExtendedUIPanelPlugin {
                         token
                 );
                 Vector2f ui = translateCoordinatesToUI(token.getLocation());
+                addTooltipTo(comp, new MapTooltipComponent() {
+                    @Override
+                    public void createTooltip(TooltipMakerAPI tooltip, boolean expanded, Object tooltipParam) {
+                        if (token.getCustomPlugin() != null && token.getCustomPlugin().hasCustomMapTooltip()) {
+                            token.getCustomPlugin().createMapTooltip(tooltip, expanded);
+                        } else {
+                            if (token.getMarket() != null && token.getMarket().getFaction() != null) {
+                                boolean isMilitary = Misc.isMilitary(token.getMarket());
+                                String name = token.getMarket().getName() + " - " + token.getMarket().getFaction().getDisplayName();
+                                if (isMilitary) {
+                                    name += " (military)";
+                                }
+                                name += " (size " + token.getMarket().getSize() + ")";
+                                tooltip.addPara(name, token.getMarket().getFaction().getBaseUIColor(), 2f);
+                                if (token.hasTag(Tags.STATION)) {
+                                    tooltip.addPara("Orbital Station", 2f);
+                                }
+
+                            } else if (token.getFaction() != null && token.getCustomPlugin() instanceof CampaignObjective objective) {
+                                String factionName = token.getFaction().getDisplayName();
+                                String fullName = token.getName() + " - " + factionName;
+                                if (token.getFaction().getId().equals(Factions.NEUTRAL)) {
+                                    fullName = token.getName();
+                                }
+                                tooltip.addPara(fullName, token.getFaction().getBaseUIColor(), 2f);
+
+                                TooltipMakerAPI info = tooltip.beginSubTooltip(getTooltipWidth(tooltipParam));
+                                objective.printEffect(info, 0f);
+                                tooltip.addCustom(info, 2f);
+                                tooltip.endSubTooltip();
+                                ;
+                                tooltip.addPara(token.getCustomEntitySpec().getDefaultName(), Misc.getGrayColor(), 2f);
+                                tooltip.addSpacer(10f);
+
+
+                            }
+                            else if (token.getFaction()!=null){
+                                String  fullName = token.getName();
+                                tooltip.addPara(fullName, token.getFaction().getBaseUIColor(), 2f);
+
+                            }
+
+                        }
+                    }
+                }, TooltipMakerAPI.TooltipLocation.RIGHT, false);
                 mapZoom.addComponent(comp, ui.x - token.getRadius(), ui.y - token.getRadius());
                 comp.scale = mapZoom.currScale;
             }
@@ -289,9 +449,9 @@ public class MapMainComponent implements ExtendedUIPanelPlugin {
         follower.scale = mapZoom.currScale;
         mapZoom.addComponent(follower, 0, 0);
 
-         pointer = new MapPointerComponent(follower, this);
+        pointer = new MapPointerComponent(follower, this);
         pointer.scale = mapZoom.currScale;
-        pointer.setShouldRender(pointerMode);
+        pointer.setShouldRender(false);
         mapZoom.addComponent(pointer, 0, 0);
 
         afterFinalize();
@@ -300,44 +460,89 @@ public class MapMainComponent implements ExtendedUIPanelPlugin {
     // ========================================================================
     // Hooks (override in subclasses to inject behavior before/after steps)
     // ========================================================================
-    protected void beforeBuild() {}
-    protected void afterBuild() {}
+    protected void beforeBuild() {
+    }
 
-    protected void beforeAddCorners() {}
-    protected void afterAddCorners() {}
+    protected void afterBuild() {
+    }
 
-    protected void beforeAddGrid() {}
-    protected void afterAddGrid() {}
+    protected void beforeAddCorners() {
+    }
 
-    protected void beforeAddOrbits() {}
-    protected void afterAddOrbits() {}
+    protected void afterAddCorners() {
+    }
 
-    protected void beforeAddJumpPoints() {}
-    protected void afterAddJumpPoints() {}
+    protected void beforeAddGrid() {
+    }
 
-    protected void beforeAddPlanets() {}
-    protected void afterAddPlanets() {}
+    protected void afterAddGrid() {
+    }
 
-    protected void beforeAddTerrains() {}
-    protected void afterAddTerrains() {}
+    protected void beforeAddOrbits() {
+    }
 
-    protected void beforeAddCustomEntities() {}
-    protected void afterAddCustomEntities() {}
+    protected void afterAddOrbits() {
+    }
 
-    protected void beforeAddAsteroids() {}
-    protected void afterAddAsteroids() {}
+    protected void beforeAddJumpPoints() {
+    }
 
-    protected void beforeFinalize() {}
-    protected void afterFinalize() {}
+    protected void afterAddJumpPoints() {
+    }
+
+    protected void beforeAddPlanets() {
+    }
+
+    protected void afterAddPlanets() {
+    }
+
+    protected void beforeAddTerrains() {
+    }
+
+    protected void afterAddTerrains() {
+    }
+
+    protected void beforeAddCustomEntities() {
+    }
+
+    protected void afterAddCustomEntities() {
+    }
+
+    protected void beforeAddAsteroids() {
+    }
+
+    protected void afterAddAsteroids() {
+    }
+
+    protected void beforeFinalize() {
+    }
+
+    protected void afterFinalize() {
+    }
 
     // ========================================================================
     // ExtendedUIPanelPlugin
     // ========================================================================
-    @Override public CustomPanelAPI getMainPanel() { return mainPanel; }
-    @Override public void createUI() {}
-    @Override public void positionChanged(PositionAPI position) {}
-    @Override public void renderBelow(float alphaMult) {}
-    @Override public void render(float alphaMult) {}
+    @Override
+    public CustomPanelAPI getMainPanel() {
+        return mainPanel;
+    }
+
+    @Override
+    public void createUI() {
+    }
+
+    @Override
+    public void positionChanged(PositionAPI position) {
+    }
+
+    @Override
+    public void renderBelow(float alphaMult) {
+    }
+
+    @Override
+    public void render(float alphaMult) {
+    }
 
     @Override
     public void advance(float amount) {
@@ -360,11 +565,11 @@ public class MapMainComponent implements ExtendedUIPanelPlugin {
         return mapZoom;
     }
 
-    public void onClick(Vector2f inUIWorldCoordinates, InputEventAPI event){
+    public void onClick(Vector2f inUIWorldCoordinates, InputEventAPI event) {
         for (Object object : getMapZoom().getAllEntitiesComponents()) {
-            if(object instanceof TerrainRenderV2 renderV2){
+            if (object instanceof TerrainRenderV2 renderV2) {
                 CampaignTerrainAPI terrain = (CampaignTerrainAPI) renderV2.getToken();
-                if(  terrain.getPlugin().containsPoint(translateCoordinatesFromUIToWorld(inUIWorldCoordinates),Global.getSector().getPlayerFleet().getRadius())){
+                if (terrain.getPlugin().containsPoint(translateCoordinatesFromUIToWorld(inUIWorldCoordinates), Global.getSector().getPlayerFleet().getRadius())) {
                     String hehe = "hehe";
                 }
 
@@ -372,31 +577,42 @@ public class MapMainComponent implements ExtendedUIPanelPlugin {
         }
 
     }
-    public void addTooltipTo(ResizableComponent addTo, TooltipMakerAPI.TooltipCreator creator, TooltipMakerAPI.TooltipLocation location,boolean recreateEveryFrame){
-        TooltipMakerAPI tooltip = mainPanel.createUIElement(1,1,false);
-        tooltip.addTooltipTo(creator,addTo.getTooltipOnHoverPanel(),location,recreateEveryFrame);
+
+    public void addTooltipTo(ResizableComponent addTo, TooltipMakerAPI.TooltipCreator creator, TooltipMakerAPI.TooltipLocation location, boolean recreateEveryFrame) {
+        TooltipMakerAPI tooltip = mainPanel.createUIElement(1, 1, false);
+        tooltip.addTooltipTo(creator, addTo.getTooltipOnHoverPanel(), location, recreateEveryFrame);
     }
 
-    @Override public void processInput(List<InputEventAPI> events) {
-        events.stream().filter(x->!x.isConsumed()&&(x.isLMBUpEvent()||x.isRMBUpEvent())&&mapZoom.getPluginPanel().getPosition().containsEvent(x)).forEach(x->{
-            onClick(mapZoom.calculateMouseToWorldCords(),x);
+    @Override
+    public void processInput(List<InputEventAPI> events) {
+
+        events.stream().filter(x -> !x.isConsumed() && mapZoom.getPluginPanel().getPosition().containsEvent(x)).forEach(x -> {
+            getMapZoom().getAllEntitiesComponents().forEach(y->y.processInputForMapEntity(events,this));
+        });
+        events.stream().filter(x -> !x.isConsumed() && (x.isLMBUpEvent() || x.isRMBUpEvent()) && mapZoom.getPluginPanel().getPosition().containsEvent(x)).forEach(x -> {
+            onClick(mapZoom.calculateMouseToWorldCords(), x);
             x.consume();
         });
-        events.stream().filter(x->!x.isConsumed()&&x.isKeyUpEvent()&&x.getEventValue()== Keyboard.KEY_T).findFirst().ifPresent(x->{
-            pointerMode = !pointerMode;
-            pointer.setShouldRender(pointerMode);
+        events.stream().filter(x -> !x.isConsumed() && x.isKeyUpEvent() && x.getEventValue() == Keyboard.KEY_T).findFirst().ifPresent(x -> {;
+            pointer.setShouldRender(!pointer.shouldRender);
             x.consume();
         });
     }
-    @Override public void buttonPressed(Object buttonId) {}
+
+    @Override
+    public void buttonPressed(Object buttonId) {
+    }
 
     // ========================================================================
     // Utils
     // ========================================================================
-    /** World (0,0 center) -> UI (0,0 top-left). */
+
+    /**
+     * World (0,0 center) -> UI (0,0 top-left).
+     */
     public Vector2f translateCoordinatesToUI(Vector2f worldLocation) {
-        float uiX = worldLocation.x + 27000f;   // shift X so -27000 → 0, +27000 → 54000
-        float uiY = 27000f - worldLocation.y;   // invert Y so +27000 → 0 (top), -27000 → 54000 (bottom)
+        float uiX = worldLocation.x + WORLD_X;   // shift X so -27000 → 0, +27000 → 54000
+        float uiY = WORLD_X - worldLocation.y;   // invert Y so +27000 → 0 (top), -27000 → 54000 (bottom)
         return new Vector2f(uiX, uiY);
     }
 
@@ -412,9 +628,10 @@ public class MapMainComponent implements ExtendedUIPanelPlugin {
                 Global.getSettings().getMouseY()
         );
     }
+
     public Vector2f translateCoordinatesFromUIToWorld(Vector2f ui) {
-        float worldX = ui.x - 27000f;   // 0..54000 UI -> -27000..+27000 world
-        float worldY = 27000f - ui.y;   // invert Y back to world's +up, center-origin
+        float worldX = ui.x - WORLD_X;   // 0..54000 UI -> -27000..+27000 world
+        float worldY = WORLD_X - ui.y;   // invert Y back to world's +up, center-origin
         return new Vector2f(worldX, worldY);
     }
 
