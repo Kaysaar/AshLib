@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.util.vector.Vector2f;
 
 import java.awt.*;
 import java.io.IOException;
@@ -69,6 +70,37 @@ public class AshMisc {
         CustomPanelAPI panelAPI = Global.getSettings().createCustom(width, height, dialog);
         dialog.init(panelAPI, (Global.getSettings().getScreenWidth()/2) - (panelAPI.getPosition().getWidth() / 2), (Global.getSettings().getScreenHeight()/2) + (panelAPI.getPosition().getHeight() / 2), true);
     }
+    public static void initPopUpDialogInVanillaDialog(BasePopUpDialog dialog, float width, float height){
+        CustomPanelAPI panelAPI = Global.getSettings().createCustom(width, height, dialog);
+        dialog.initForDialog(panelAPI, (Global.getSettings().getScreenWidth()/2) - (panelAPI.getPosition().getWidth() / 2), (Global.getSettings().getScreenHeight()/2) + (panelAPI.getPosition().getHeight() / 2), true);
+    }
+
+    public static <K, V> void replaceEntryAtIndex(LinkedHashMap<K, V> map, int index, K newKey, V newValue) {
+        if (index < 0 || index >= map.size())
+            throw new IndexOutOfBoundsException(index);
+
+        LinkedHashMap<K, V> rebuilt = new LinkedHashMap<>(map.size());
+        int i = 0;
+        boolean replaced = false;
+
+        for (var e : map.entrySet()) {
+            if (i == index) {
+                rebuilt.put(newKey, newValue);
+                replaced = true;
+            } else {
+                if (!Objects.equals(e.getKey(), newKey)) {
+                    rebuilt.put(e.getKey(), e.getValue());
+                }
+            }
+            i++;
+        }
+
+        if (!replaced) throw new IllegalStateException("Failed to replace at index " + index);
+
+        map.clear();
+        map.putAll(rebuilt);
+    }
+
     public static void placePopUpUI(PopUpUI ui, ButtonAPI component, float initWidth, float initHeight) {
 
         float width1 = initWidth;
@@ -99,6 +131,28 @@ public class AshMisc {
 
         float x = component.getPosition().getX() + component.getPosition().getWidth();
         float y = component.getPosition().getY() + component.getPosition().getHeight();
+        if (x + width1 >= Global.getSettings().getScreenWidth()) {
+            float diff = x + width1 - Global.getSettings().getScreenWidth();
+            x = x - diff - 5;
+
+        }
+        if (y - height1 <= 0) {
+            y = height1;
+        }
+        if (y > Global.getSettings().getScreenHeight()) {
+            y = Global.getSettings().getScreenHeight() - 10;
+        }
+
+        ui.init(panelAPI, x, y, false);
+    }
+    public static void placePopUpUIInTL(PopUpUI ui, UIComponentAPI component, float initWidth, float initHeight, Vector2f correction) {
+
+        float width1 = initWidth;
+        float height1 = ui.createUIMockup(Global.getSettings().createCustom(initWidth, initHeight, null));
+        CustomPanelAPI panelAPI = Global.getSettings().createCustom(width1, height1, ui);
+
+        float x = component.getPosition().getX() + component.getPosition().getWidth()+correction.x;
+        float y = component.getPosition().getY() + component.getPosition().getHeight()+correction.y;
         if (x + width1 >= Global.getSettings().getScreenWidth()) {
             float diff = x + width1 - Global.getSettings().getScreenWidth();
             x = x - diff - 5;

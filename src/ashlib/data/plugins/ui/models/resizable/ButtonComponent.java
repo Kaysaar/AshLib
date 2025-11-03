@@ -30,6 +30,9 @@ public class ButtonComponent extends ResizableComponent {
     }
     boolean enableRightClick = false;
     boolean decreasedMode = true;
+    public void setOverrideHighlight(boolean overrideHighlight) {
+        this.overrideHighlight = overrideHighlight;
+    }
 
     public void setMaxHighlight(float maxHighlight) {
         this.maxHighlight = maxHighlight;
@@ -74,7 +77,7 @@ public class ButtonComponent extends ResizableComponent {
 
     public boolean shouldHighlight() {
 
-        return (doesHover() || overrideHighlight)&&isClickable;
+        return doesHover() && (isClickable||overrideHighlight);
     }
 
     public CustomPanelAPI getPanelOfButton() {
@@ -121,7 +124,6 @@ public boolean shouldRenderBorders = true;
 
     @Override
     public void advance(float amount) {
-        if(!blockButtonInstance){
             float scale = this.scale;
             if (shouldHighlight()) {
                 currHighlight += 0.02f;
@@ -135,6 +137,7 @@ public boolean shouldRenderBorders = true;
                     currHighlight = 0f;
                 }
             }
+        if(!blockButtonInstance){
             if (breakBetweenButtons != null) {
                 breakBetweenButtons.advance(amount);
                 if (breakBetweenButtons.intervalElapsed()) {
@@ -142,6 +145,8 @@ public boolean shouldRenderBorders = true;
                 }
             }
         }
+
+
 
     }
 public  boolean blockButtonInstance = false;
