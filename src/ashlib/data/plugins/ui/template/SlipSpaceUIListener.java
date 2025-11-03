@@ -1,7 +1,5 @@
 package ashlib.data.plugins.ui.template;
 
-import ashlib.data.plugins.ui.models.resizable.examples.PopUpOnStarSystems;
-import ashlib.data.plugins.ui.models.resizable.map.MapMainComponent;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.listeners.CampaignInputListener;
 import com.fs.starfarer.api.input.InputEventAPI;
@@ -9,7 +7,7 @@ import org.lwjgl.input.Keyboard;
 
 import java.util.List;
 
-public class TemplateDialogEveryFrameScript implements CampaignInputListener {
+public class SlipSpaceUIListener implements CampaignInputListener {
     public static boolean init=false;
 
     @Override
@@ -24,8 +22,9 @@ public class TemplateDialogEveryFrameScript implements CampaignInputListener {
             if(x.getEventValue()== Keyboard.KEY_T&&x.isKeyDownEvent()&& Global.getSettings().isDevMode()){
                 x.consume();
                 // specify your ExtendedUI
+                Global.getSector().getCampaignUI().showInteractionDialog(new SlipspaceDialogInitalizationPlugin(),null);
 
-                new TemplateDialog("Test",new PopUpOnStarSystems(1000,600,Global.getSector().getPlayerFleet().getStarSystem()));
+//                new SlipSpaceDialog("Test",new SlipSpaceJumpCoordinateUI(1000,600,Global.getSector().getPlayerFleet().getStarSystem()));
             }
         });
     }

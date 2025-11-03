@@ -54,7 +54,7 @@ public class MapGridRenderer extends ResizableComponent {
         // Configure sprite appearance
         Color color = new Color(54, 107, 119, 180);
         spriteToRender.setColor(color);
-        spriteToRender.setAlphaMult(alphaMult*0.6f);
+        spriteToRender.setAlphaMult(alphaMult * 0.6f);
         spriteToRender.setNormalBlend();
 
         // Determine grid bounds
@@ -62,6 +62,8 @@ public class MapGridRenderer extends ResizableComponent {
         float endX = topRight.getComponentPanel().getPosition().getX();
         float topY = topLeft.getComponentPanel().getPosition().getCenterY();
         float bottomY = bottomLeft.getComponentPanel().getPosition().getCenterY();
+        float centerX = center.getComponentPanel().getPosition().getCenterX();
+        float centerY = center.getComponentPanel().getPosition().getCenterY();
 
         // Ensure correct Y order
         if (bottomY > topY) {
@@ -73,16 +75,39 @@ public class MapGridRenderer extends ResizableComponent {
         float width = endX - startX;
         float height = topY - bottomY;
 
-        // --- Horizontal grid lines ---
+        // --- Horizontal grid lines (vary Y; full width) ---
         spriteToRender.setSize(width, 1f);
-        for (float y = topY; y >= bottomY; y -= scaledGridSize) {
+
+        // Center horizontal line
+        if (centerY <= topY && centerY >= bottomY) {
+            spriteToRender.render(startX, centerY);
+        }
+
+        // Upwards from centerY to topY
+        for (float y = centerY + scaledGridSize; y <= topY; y += scaledGridSize) {
+            spriteToRender.render(startX, y);
+        }
+        // Downwards from centerY to bottomY
+        for (float y = centerY - scaledGridSize; y >= bottomY; y -= scaledGridSize) {
             spriteToRender.render(startX, y);
         }
 
-        // --- Vertical grid lines ---
+        // --- Vertical grid lines (vary X; full height) ---
         spriteToRender.setSize(1f, height);
-        for (float x = startX; x <= endX; x += scaledGridSize) {
+
+        // Center vertical line
+        if (centerX >= startX && centerX <= endX) {
+            spriteToRender.render(centerX, bottomY);
+        }
+
+        // Rightwards from centerX to endX
+        for (float x = centerX + scaledGridSize; x <= endX; x += scaledGridSize) {
+            spriteToRender.render(x, bottomY);
+        }
+        // Leftwards from centerX to startX
+        for (float x = centerX - scaledGridSize; x >= startX; x -= scaledGridSize) {
             spriteToRender.render(x, bottomY);
         }
     }
+
 }

@@ -2,10 +2,7 @@ package ashlib.data.plugins.ui.models;
 
 import ashlib.data.plugins.misc.AshMisc;
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.ui.CustomPanelAPI;
-import com.fs.starfarer.api.ui.Fonts;
-import com.fs.starfarer.api.ui.LabelAPI;
-import com.fs.starfarer.api.ui.TooltipMakerAPI;
+import com.fs.starfarer.api.ui.*;
 import com.fs.starfarer.api.util.Misc;
 
 public class BasePopUpDialog extends PopUpUI {
@@ -45,7 +42,8 @@ public class BasePopUpDialog extends PopUpUI {
             LabelAPI label = headerTooltip.addPara(title,Misc.getTooltipTitleAndLightHighlightColor(),5f);
             panelAPI.addUIElement(headerTooltip).inTL(15,10);
             float width = label.computeTextWidth(label.getText());
-            label.getPosition().setLocation(0,0).inTL((panelAPI.getPosition().getWidth()/2)-(width/2),3);
+            label.getPosition().setLocation(0,0).inTL(0,3);
+            label.setAlignment(Alignment.MID);
         }
         else {
             y = 10;

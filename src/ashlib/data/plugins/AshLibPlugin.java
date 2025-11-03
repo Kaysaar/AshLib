@@ -1,7 +1,9 @@
 package ashlib.data.plugins;
 
+import ashlib.data.plugins.coreui.CommandTabInterceptor;
+import ashlib.data.plugins.coreui.CommandTabTracker;
 import ashlib.data.plugins.handlers.AICoreSkillPollHandler;
-import ashlib.data.plugins.ui.template.TemplateDialogEveryFrameScript;
+import ashlib.data.plugins.ui.template.SlipSpaceUIListener;
 import ashlib.data.scripts.AiCoreLevelUpHijacker;
 import ashlib.data.scripts.AshReplaceAISkills;;
 import com.fs.starfarer.api.BaseModPlugin;
@@ -25,6 +27,8 @@ public class AshLibPlugin extends BaseModPlugin {
         super.onGameLoad(newGame);
         Global.getSector().addTransientScript(new AshReplaceAISkills());
         Global.getSector().addTransientScript(new AiCoreLevelUpHijacker());
-//        Global.getSector().getListenerManager().addListener(new TemplateDialogEveryFrameScript(),true);
+        Global.getSector().addTransientScript(new CommandTabTracker());
+        Global.getSector().getListenerManager().addListener(new CommandTabInterceptor(),true);
+//        Global.getSector().getListenerManager().addListener(new SlipSpaceUIListener(),true);
     }
 }
