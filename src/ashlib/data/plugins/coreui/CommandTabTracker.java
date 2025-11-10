@@ -1,8 +1,6 @@
 package ashlib.data.plugins.coreui;
 
 import ashlib.data.plugins.reflection.ReflectionBetterUtilis;
-import ashlib.data.plugins.ui.models.ExtendedUIPanelPlugin;
-import ashlib.data.plugins.ui.models.PopUpUI;
 import com.fs.graphics.util.Fader;
 import com.fs.starfarer.api.EveryFrameScript;
 import com.fs.starfarer.api.Global;
@@ -13,10 +11,7 @@ import com.fs.starfarer.api.ui.*;
 import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.Pair;
 import com.fs.starfarer.campaign.CampaignState;
-import com.fs.starfarer.campaign.command.CustomProductionPanel;
 import com.fs.state.AppDriver;
-import data.kaysaar.aotd.vok.campaign.econ.globalproduction.scripts.ProductionUtil;
-import data.kaysaar.aotd.vok.ui.customprod.components.UIData;
 
 
 import java.lang.invoke.MethodHandle;
@@ -24,7 +19,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.*;
 
-import static data.kaysaar.aotd.vok.misc.AoTDMisc.tryToGetButtonProd;
 
 public class CommandTabTracker implements EveryFrameScript {
     public static float WIDTH,HEIGHT;
@@ -469,7 +463,7 @@ public class CommandTabTracker implements EveryFrameScript {
             }
         }
         if (!hasComponentPresent((UIComponentAPI) panelMap.get(currentTab))) {
-            removePanels((ArrayList<UIComponentAPI>) data.kaysaar.aotd.vok.plugins.ReflectionUtilis.getChildrenCopy(mainParent), mainParent, null);
+            removePanels((ArrayList<UIComponentAPI>) ReflectionUtilis.getChildrenCopy(mainParent), mainParent, null);
             if (currentTab.getText().toLowerCase().contains("doctrine & blueprints")) {
                 UIComponentAPI comp = (UIComponentAPI) panelMap.get(currentTab);
                 ReflectionUtilis.invokeMethodWithAutoProjection("createIfNeeded", comp);
@@ -501,11 +495,38 @@ public class CommandTabTracker implements EveryFrameScript {
         }
 
     }
+    public static boolean lockedState = false;
+    public static boolean initalizedState = false;
+
+    public static void lockMainPanel(){
+        lockedState = true;
+        initalizedState = true;
+    }
+    public static void unlockMainPanel(){
+        lockedState = false;
+        initalizedState = true;
+    }
+
 
     private void handleButtons() {
-        boolean pauseSound = true;
         ButtonAPI bt = tryToGetButtonProd("doctrine & blueprints");
-        if (bt!=null&&bt.isEnabled()) {
+        if(initalizedState){
+            initalizedState = false;
+            if(lockedState){
+                panelMap.keySet().stream().filter(x -> !x.getText().contains("orders")).forEach(x -> x.setEnabled(false));
+                ReflectionUtilis.invokeMethodWithAutoProjection("disableEnabledTabs",ProductionUtil.getCoreUI());
+                ButtonAPI button = (ButtonAPI) ReflectionUtilis.invokeMethodWithAutoProjection("getPowerButton",ProductionUtil.getCoreUI());
+                button.setEnabled(false);
+            }
+            else{
+                panelMap.keySet().stream().filter(x -> !x.getText().contains("orders")).forEach(x -> x.setEnabled(true));
+                ReflectionUtilis.invokeMethodWithAutoProjection("enableAllTabs",ProductionUtil.getCoreUI());
+                ButtonAPI button = (ButtonAPI) ReflectionUtilis.invokeMethodWithAutoProjection("getPowerButton",ProductionUtil.getCoreUI());
+                button.setEnabled(true);
+            }
+        }
+
+        if (bt!=null&&!bt.isEnabled()) {
             if (!needsToResetStates) {
                 needsToResetStates = true;
                 for (ButtonAPI buttonAPI : panelMap.keySet()) {
