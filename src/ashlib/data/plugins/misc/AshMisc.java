@@ -1,6 +1,7 @@
 package ashlib.data.plugins.misc;
 
 import ashlib.data.plugins.ui.models.BasePopUpDialog;
+import ashlib.data.plugins.ui.models.InstantPopUpUI;
 import ashlib.data.plugins.ui.models.PopUpUI;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.*;
@@ -167,6 +168,74 @@ public class AshMisc {
 
         ui.init(panelAPI, x, y, false);
     }
+
+    public static void placePopUpUI(InstantPopUpUI ui, ButtonAPI component, float initWidth, float initHeight) {
+
+        float width1 = initWidth;
+        float height1 = ui.createUIMockup(Global.getSettings().createCustom(initWidth, initHeight, null));
+        CustomPanelAPI panelAPI = Global.getSettings().createCustom(width1, height1, ui);
+
+        float x = component.getPosition().getX() + component.getPosition().getWidth();
+        float y = component.getPosition().getY() + component.getPosition().getHeight();
+        if (x + width1 >= Global.getSettings().getScreenWidth()) {
+            float diff = x + width1 - Global.getSettings().getScreenWidth();
+            x = x - diff - 5;
+
+        }
+        if (y - height1 <= 0) {
+            y = height1;
+        }
+        if (y > Global.getSettings().getScreenHeight()) {
+            y = Global.getSettings().getScreenHeight() - 10;
+        }
+
+        ui.init(panelAPI, x, y, false);
+    }
+    public static void placePopUpUI(InstantPopUpUI ui, UIComponentAPI component, float initWidth, float initHeight) {
+
+        float width1 = initWidth;
+        float height1 = ui.createUIMockup(Global.getSettings().createCustom(initWidth, initHeight, null));
+        CustomPanelAPI panelAPI = Global.getSettings().createCustom(width1, height1, ui);
+
+        float x = component.getPosition().getX() + component.getPosition().getWidth();
+        float y = component.getPosition().getY() + component.getPosition().getHeight();
+        if (x + width1 >= Global.getSettings().getScreenWidth()) {
+            float diff = x + width1 - Global.getSettings().getScreenWidth();
+            x = x - diff - 5;
+
+        }
+        if (y - height1 <= 0) {
+            y = height1;
+        }
+        if (y > Global.getSettings().getScreenHeight()) {
+            y = Global.getSettings().getScreenHeight() - 10;
+        }
+
+        ui.init(panelAPI, x, y, false);
+    }
+    public static void placePopUpUIInTL(InstantPopUpUI ui, UIComponentAPI component, float initWidth, float initHeight, Vector2f correction) {
+
+        float width1 = initWidth;
+        float height1 = ui.createUIMockup(Global.getSettings().createCustom(initWidth, initHeight, null));
+        CustomPanelAPI panelAPI = Global.getSettings().createCustom(width1, height1, ui);
+
+        float x = component.getPosition().getX() + component.getPosition().getWidth()+correction.x;
+        float y = component.getPosition().getY() + component.getPosition().getHeight()+correction.y;
+        if (x + width1 >= Global.getSettings().getScreenWidth()) {
+            float diff = x + width1 - Global.getSettings().getScreenWidth();
+            x = x - diff - 5;
+
+        }
+        if (y - height1 <= 0) {
+            y = height1;
+        }
+        if (y > Global.getSettings().getScreenHeight()) {
+            y = Global.getSettings().getScreenHeight() - 10;
+        }
+
+        ui.init(panelAPI, x, y, false);
+    }
+
     public static void drawRectangleFilledForTooltip(TooltipMakerAPI tooltipMakerAPI, float alphaMult, Color uiColor) {
         if (uiColor == null) return;
 

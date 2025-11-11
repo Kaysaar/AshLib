@@ -3,12 +3,10 @@ package ashlib.data.plugins.ui.models;
 import ashlib.data.plugins.misc.AshMisc;
 import ashlib.data.plugins.reflection.ReflectionBetterUtilis;
 import ashlib.data.plugins.ui.plugins.UILinesRenderer;
-import com.fs.graphics.util.Fader;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.CampaignUIAPI;
 import com.fs.starfarer.api.campaign.CoreUIAPI;
 import com.fs.starfarer.api.campaign.CustomUIPanelPlugin;
-import com.fs.starfarer.api.campaign.InteractionDialogAPI;
 import com.fs.starfarer.api.graphics.SpriteAPI;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.ui.*;
@@ -25,14 +23,13 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.List;
 
-public class PopUpUI implements CustomUIPanelPlugin {
+public class InstantPopUpUI implements CustomUIPanelPlugin {
 
-    public int limit = 10;
+    public int limit = 5;
     public float totalFrames;
     public IntervalUtil betweenCodex = null;
     public boolean detectedCodex = false;
     public boolean attemptedExit = false;
-    protected Fader fader = null; // Purple Nebula
     private static class ReflectionUtilis {
         // Code taken and modified from Grand Colonies
         private static final Class<?> fieldClass;
@@ -348,9 +345,8 @@ public class PopUpUI implements CustomUIPanelPlugin {
     UIPanelAPI parent;
     public float frames;
     public CustomPanelAPI panelToInfluence;
-    public TooltipMakerAPI mainTooltip;
     public UILinesRenderer rendererBorder = new UILinesRenderer(0f);
-    public ButtonAPI confirmButton;
+   public ButtonAPI confirmButton;
     public ButtonAPI cancelButton;
     public boolean isDialog =true;
     public ButtonAPI getConfirmButton() {
@@ -365,24 +361,8 @@ public class PopUpUI implements CustomUIPanelPlugin {
         return cancelButton;
     }
     public boolean reachedMaxHeight =  false;
-    public boolean pressedConfirmCancel = false; // Purple Nebula
     float originalSizeX ,originalSizeY;
     float x,y;
-    float initX,initY; // Purple Nebula
-
-    //  Purple Nebula
-    public void removeUI() {
-        if (mainTooltip != null) {
-            mainTooltip.setOpacity(0);
-        }
-        if (confirmButton != null) {
-            confirmButton.setOpacity(0);
-        }
-        if (cancelButton != null) {
-            cancelButton.setOpacity(0);
-        }
-    }
-
     @Override
     public void positionChanged(PositionAPI position) {
 
@@ -391,45 +371,29 @@ public class PopUpUI implements CustomUIPanelPlugin {
     public void init(CustomPanelAPI panelAPI,float x, float y,boolean isDialog) {
         panelToInfluence = panelAPI;
         parent =  ProductionUtil.getCoreUI();
-        //  Purple Nebula
-        if (ReflectionUtilis.hasMethodOfName("getFader",this.panelToInfluence)) {
-            this.fader = (Fader) ReflectionUtilis.invokeMethod("getFader",this.panelToInfluence);
-        }
         originalSizeX = panelAPI.getPosition().getWidth();
         originalSizeY = panelAPI.getPosition().getHeight();
 
         panelToInfluence.getPosition().setSize(16,16);
         this.isDialog = isDialog;
 
-        initX = x; // Purple Nebula
-        initY = this.parent.getPosition().getHeight() - y; // Purple Nebula
-
-        parent.addComponent(panelToInfluence).inTL(x, (parent.getPosition().getHeight()-y)*2);
+        parent.addComponent(panelToInfluence).inTL(x, parent.getPosition().getHeight()-y);
         parent.bringComponentToTop(panelToInfluence);
         rendererBorder.setPanel(panelToInfluence);
-        if (fader != null) fader.setBrightness(0.1f);
 
     }
     public void initForDialog(CustomPanelAPI panelAPI,float x, float y,boolean isDialog) {
         panelToInfluence = panelAPI;
         parent =  ProductionUtil.getCoreUIForDialog();
-        //  Purple Nebula
-        if (ReflectionUtilis.hasMethodOfName("getFader",this.panelToInfluence)) {
-            this.fader = (Fader) ReflectionUtilis.invokeMethod("getFader",this.panelToInfluence);
-        }
         originalSizeX = panelAPI.getPosition().getWidth();
         originalSizeY = panelAPI.getPosition().getHeight();
 
         panelToInfluence.getPosition().setSize(16,16);
         this.isDialog = isDialog;
 
-        initX = x; // Purple Nebula
-        initY = this.parent.getPosition().getHeight() - y; // Purple Nebula
-
-        parent.addComponent(panelToInfluence).inTL(x, (parent.getPosition().getHeight()-y)*2);
+        parent.addComponent(panelToInfluence).inTL(x, parent.getPosition().getHeight()-y);
         parent.bringComponentToTop(panelToInfluence);
         rendererBorder.setPanel(panelToInfluence);
-        if (fader != null) fader.setBrightness(0.1f); // Purple Nebula
 
     }
     public void createUI(CustomPanelAPI panelAPI){
@@ -448,9 +412,10 @@ public class PopUpUI implements CustomUIPanelPlugin {
             if(isDialog){
                 blackBackground.setSize(ProductionUtil.getCoreUI().getPosition().getWidth(), ProductionUtil.getCoreUI().getPosition().getHeight());
                 blackBackground.setColor(Color.black);
-                blackBackground.setAlphaMult(fader.getBrightness()/2);
-                blackBackground.renderAtCenter(ProductionUtil.getCoreUI().getPosition().getCenterX(),ProductionUtil.getCoreUI().getPosition().getCenterY());
+                blackBackground.setAlphaMult(0.6f);
+                blackBackground.renderAtCenter(ProductionUtil.getCoreUI().getPosition().getCenterX(), ProductionUtil.getCoreUI().getPosition().getCenterY());
                 renderer.renderTiledTexture(panelToInfluence.getPosition().getX(), panelToInfluence.getPosition().getY(), panelToInfluence.getPosition().getWidth(),  panelToInfluence.getPosition().getHeight(), panelBackground.getTextureWidth(),  panelBackground.getTextureHeight(),(frames/limit)*0.9F,Color.BLACK);
+
             }
             else {
                 renderer.renderTiledTexture(panelToInfluence.getPosition().getX(), panelToInfluence.getPosition().getY(), panelToInfluence.getPosition().getWidth(),  panelToInfluence.getPosition().getHeight(), panelBackground.getTextureWidth(),  panelBackground.getTextureHeight(),(frames/limit),panelBackground.getColor());
@@ -472,10 +437,6 @@ public class PopUpUI implements CustomUIPanelPlugin {
 
     }
 
-    float goalYOffset;
-    float offsetTest;
-    boolean didOnceOne = false;
-    boolean didOnceTwo = false;
     @Override
     public void advance(float amount) {
         if(betweenCodex!=null){
@@ -485,105 +446,46 @@ public class PopUpUI implements CustomUIPanelPlugin {
             }
         }
 
-        // Purple Nebula
-        // Draw and resize panel
-        if (!didOnceOne) {
-            this.panelToInfluence.getPosition().setYAlignOffset(-initY*2);
-            goalYOffset = -initY;
-            offsetTest = goalYOffset*2;
-            didOnceOne = true;
-        }
-        if (!pressedConfirmCancel) {
-            if (this.frames <= (float) this.limit) {
-                ++this.frames;
-                offsetTest += Math.abs(goalYOffset / limit);
-                float progress = this.frames / (float) this.limit;
-                if (this.frames < (float) this.limit && !this.reachedMaxHeight) {
-                    fader.setDurationIn((float) limit / 20);
-                    fader.fadeIn();
-                    this.panelToInfluence.getPosition().setYAlignOffset(offsetTest);
-                    this.panelToInfluence.getPosition().setSize(this.originalSizeX, this.originalSizeY * progress);
-                    return;
-                }
-
-                if (this.frames >= (float) this.limit && !this.reachedMaxHeight) {
-                    this.reachedMaxHeight = true;
-                    this.panelToInfluence.getPosition().setYAlignOffset(-initY);
-                    this.panelToInfluence.getPosition().setSize(this.originalSizeX, this.originalSizeY);
-                    this.createUI(this.panelToInfluence);
-                    return;
-                }
+        // Instant
+//        if (!this.reachedMaxHeight) {
+//            this.frames = limit;
+//            this.reachedMaxHeight = true;
+//            this.panelToInfluence.getPosition().setSize(this.originalSizeX, this.originalSizeY);
+//            this.createUI(this.panelToInfluence);
+//            return;
+//        }
+        // Old
+        if(frames<=limit){
+            frames++;
+            float progress = frames/limit;
+            if(frames<limit&&!reachedMaxHeight){
+                panelToInfluence.getPosition().setSize(originalSizeX,originalSizeY*progress);
+                return;
+            }
+            if(frames>=limit&&!reachedMaxHeight){
+                reachedMaxHeight = true;
+                panelToInfluence.getPosition().setSize(originalSizeX,originalSizeY);
+                createUI(panelToInfluence);
+                return;
             }
         }
-
-
-        // Default/Original behaviour
-//        if(frames<=limit){
-//            frames++;
-//            float progress = frames/limit;
-//            if(frames<limit&&!reachedMaxHeight){
-//                panelToInfluence.getPosition().setSize(originalSizeX,originalSizeY*progress);
-//                return;
-//            }
-//            if(frames>=limit&&!reachedMaxHeight){
-//                reachedMaxHeight = true;
-//                panelToInfluence.getPosition().setSize(originalSizeX,originalSizeY);
-//                createUI(panelToInfluence);
-//                return;
-//
-//            }
-//        }
 
         if(confirmButton!=null){
             if(confirmButton.isChecked()){
                 confirmButton.setChecked(false);
                 applyConfirmScript();
-                pressedConfirmCancel = true; // Purple Nebula
-//                this.parent.removeComponent(this.panelToInfluence);
-//                this.onExit();
+                parent.removeComponent(panelToInfluence);
+                onExit();
             }
         }
         if(cancelButton!=null){
             if(cancelButton.isChecked()){
                 cancelButton.setChecked(false);
-                pressedConfirmCancel = true; // Purple Nebula
-//                this.parent.removeComponent(this.panelToInfluence);
-//                this.onExit();
+                parent.removeComponent(panelToInfluence);
+                onExit();
             }
 
         }
-        if (pressedConfirmCancel) {
-            if (!didOnceTwo) {
-                removeUI();
-                this.frames = 10;
-                didOnceTwo = true;
-            }
-            if (this.frames >= 0) {
-                --this.frames;
-                offsetTest -= Math.abs(goalYOffset / (limit));
-                float progress = this.frames / (float) (limit);
-                if (this.frames > 0) {
-//                    fader.setDurationOut((float) limit / 60);
-                    fader.setDurationOut((float) 0.05);
-                    fader.fadeOut();
-//                fader.setBrightness(test);
-//                test+=per;
-                    this.panelToInfluence.getPosition().setYAlignOffset(offsetTest);
-                    this.panelToInfluence.getPosition().setSize(this.originalSizeX, this.originalSizeY * progress);
-
-                    return;
-                }
-            }
-//            this.blackBackground.setAlphaMult(this.blackBackground.getAlphaMult()-toRemoveAlpha);
-            if (!fader.isFadingOut()) {
-                pressedConfirmCancel = false;
-                this.parent.removeComponent(this.panelToInfluence);
-                this.onExit();
-            }
-
-        }
-
-
         if(Global.CODEX_TOOLTIP_MODE){
             detectedCodex = true;
         }
@@ -598,7 +500,7 @@ public class PopUpUI implements CustomUIPanelPlugin {
     }
     @Override
     public void processInput(List<InputEventAPI> events) {
-        if(betweenCodex!=null)return;
+     if(betweenCodex!=null)return;
         for (InputEventAPI event : events) {
             if(frames>=limit-1&&reachedMaxHeight){
                 if(event.isMouseDownEvent()&&!isDialog){
@@ -647,9 +549,8 @@ public class PopUpUI implements CustomUIPanelPlugin {
     }
     public void renderBorders(CustomPanelAPI panelAPI) {
         float leftX = panelAPI.getPosition().getX()+16;
-        float currAlpha = (frames/limit)*0.9F;
+        float currAlpha = frames/limit;
         if(currAlpha>=1)currAlpha =1;
-
         top.setSize(16,16);
         bot.setSize(16,16);
         topLeft.setSize(16,16);
