@@ -4,6 +4,7 @@ import ashlib.data.plugins.misc.AshMisc;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.ui.*;
 import com.fs.starfarer.api.util.Misc;
+import data.kaysaar.aotd.vok.campaign.econ.globalproduction.scripts.ProductionUtil;
 
 public class BasePopUpDialog extends PopUpUI {
     TooltipMakerAPI headerTooltip;
@@ -19,7 +20,7 @@ public class BasePopUpDialog extends PopUpUI {
     public void renderBelow(float alphaMult) {
         super.renderBelow(alphaMult);
         if(headerTooltip != null) {
-            AshMisc.drawRectangleFilledForTooltip(headerTooltip,1f,  Global.getSector().getPlayerFaction().getDarkUIColor().darker());
+            AshMisc.drawRectangleFilledForTooltip(headerTooltip,fader.getBrightness(),Global.getSector().getPlayerFaction().getDarkUIColor().darker());
         }
     }
 
@@ -31,8 +32,6 @@ public class BasePopUpDialog extends PopUpUI {
         createContentForDialog(tooltip,panelAPI.getPosition().getWidth()-30);
         panelAPI.addUIElement(tooltip).inTL(x,y);
         createConfirmAndCancelSection(panelAPI);
-
-
     }
 
     public void createHeaader(CustomPanelAPI panelAPI) {
@@ -51,7 +50,7 @@ public class BasePopUpDialog extends PopUpUI {
     }
 
     public void createContentForDialog(TooltipMakerAPI tooltip,float width){
-
+        mainTooltip = tooltip;
     }
 
     @Override
@@ -64,4 +63,10 @@ public class BasePopUpDialog extends PopUpUI {
         super.advance(amount);
     }
 
+    // VoK GatheringPointDialog usage in NidavelirMainPanelPlugin
+    public static void popUpDialog(BasePopUpDialog dialog, float width, float height){
+        CustomPanelAPI panelAPI = Global.getSettings().createCustom(width, height, dialog);
+        UIPanelAPI panelAPI1 = ProductionUtil.getCoreUI();
+        dialog.init(panelAPI, panelAPI1.getPosition().getCenterX() - (panelAPI.getPosition().getWidth() / 2), panelAPI1.getPosition().getCenterY() + (panelAPI.getPosition().getHeight() / 2), true);
+    }
 }
