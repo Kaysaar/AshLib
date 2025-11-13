@@ -38,7 +38,7 @@ public class BasePopUpDialog extends PopUpUI {
         if(AshMisc.isStringValid(title)) {
             headerTooltip = panelAPI.createUIElement(panelAPI.getPosition().getWidth()-30,20,false);
             headerTooltip.setParaFont(Fonts.ORBITRON_20AABOLD);
-            LabelAPI label = headerTooltip.addPara(title,Misc.getTooltipTitleAndLightHighlightColor(),5f);
+            LabelAPI label = headerTooltip.addPara(title,Misc.getBasePlayerColor(),5f);
             panelAPI.addUIElement(headerTooltip).inTL(15,10);
             float width = label.computeTextWidth(label.getText());
             label.getPosition().setLocation(0,0).inTL(0,3);
