@@ -30,6 +30,7 @@ public class BasePopUpDialog extends PopUpUI {
 
         TooltipMakerAPI tooltip = panelAPI.createUIElement(panelAPI.getPosition().getWidth()-30,panelAPI.getPosition().getHeight()-y,true);
         createContentForDialog(tooltip,panelAPI.getPosition().getWidth()-30);
+        addTooltip(tooltip);
         panelAPI.addUIElement(tooltip).inTL(x,y);
         createConfirmAndCancelSection(panelAPI);
     }
@@ -50,7 +51,6 @@ public class BasePopUpDialog extends PopUpUI {
     }
 
     public void createContentForDialog(TooltipMakerAPI tooltip,float width){
-        mainTooltip = tooltip;
     }
 
     @Override

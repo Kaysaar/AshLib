@@ -32,6 +32,7 @@ public class BaseSliderDialog extends BasePopUpDialog {
         createHeaader(panelAPI);
         panelToUpdate = panelAPI.createCustomPanel(panelAPI.getPosition().getWidth() - 30, panelAPI.getPosition().getHeight() - y, null);
         createUIForFirstTime();
+
         panelAPI.addComponent(panelToUpdate).inTL(x, y);
         createConfirmAndCancelSection(panelAPI);
     }
