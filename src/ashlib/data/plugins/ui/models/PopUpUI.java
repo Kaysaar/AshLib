@@ -8,7 +8,6 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.CampaignUIAPI;
 import com.fs.starfarer.api.campaign.CoreUIAPI;
 import com.fs.starfarer.api.campaign.CustomUIPanelPlugin;
-import com.fs.starfarer.api.campaign.InteractionDialogAPI;
 import com.fs.starfarer.api.graphics.SpriteAPI;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.ui.*;
@@ -23,6 +22,7 @@ import java.awt.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PopUpUI implements CustomUIPanelPlugin {
@@ -348,7 +348,7 @@ public class PopUpUI implements CustomUIPanelPlugin {
     UIPanelAPI parent;
     public float frames;
     public CustomPanelAPI panelToInfluence;
-    public TooltipMakerAPI mainTooltip;
+    public ArrayList<TooltipMakerAPI> mainTooltips = new ArrayList<>();
     public UILinesRenderer rendererBorder = new UILinesRenderer(0f);
     public ButtonAPI confirmButton;
     public ButtonAPI cancelButton;
@@ -369,12 +369,18 @@ public class PopUpUI implements CustomUIPanelPlugin {
     float originalSizeX ,originalSizeY;
     float x,y;
     float initX,initY; // Purple Nebula
-
+    public void addTooltip(TooltipMakerAPI tooltipMakerAPI){
+        if(mainTooltips==null){
+            mainTooltips = new ArrayList<>();
+        }
+        mainTooltips.add(tooltipMakerAPI);
+    }
     //  Purple Nebula
     public void removeUI() {
-        if (mainTooltip != null) {
-            mainTooltip.setOpacity(0);
+        for (TooltipMakerAPI mainTooltip : mainTooltips) {
+            mainTooltip.setOpacity(0f);
         }
+        mainTooltips.clear();
         if (confirmButton != null) {
             confirmButton.setOpacity(0);
         }
@@ -609,22 +615,27 @@ public class PopUpUI implements CustomUIPanelPlugin {
                     float yTop = panelToInfluence.getPosition().getY()+panelToInfluence.getPosition().getHeight();
                     boolean hovers = detector.determineIfHoversOverButton(xLeft,yTop,xRight,yTop,xLeft,yBot,xRight,yBot,Global.getSettings().getMouseX(),Global.getSettings().getMouseY());
                     if(!hovers){
-                        parent.removeComponent(panelToInfluence);
-                        event.consume();
-                        onExit();
+                        if(cancelButton!=null){
+                            cancelButton.setChecked(true);
+                        }
+                        else{
+                            pressedConfirmCancel = true;
+                        }
                     }
                 }
                 if(!event.isConsumed()){
-                    if(event.getEventValue()== Keyboard.KEY_ESCAPE&&!event.isMouseEvent()&&event.isKeyUpEvent()&&cancelButton==null){
-                        if(attemptedExit){
-                            parent.removeComponent(panelToInfluence);
-                            event.consume();
-                            onExit();
-                            break;
+                    if(event.getEventValue()== Keyboard.KEY_ESCAPE&&!event.isMouseEvent()&&event.isKeyDownEvent()){
+                        if(cancelButton!=null){
+                            cancelButton.setChecked(true);
                         }
-                        else {
-                            attemptedExit = true;
+                        else{
+                            pressedConfirmCancel = true;
                         }
+
+                        event.consume();
+                        break;
+
+
 
 
                     }
