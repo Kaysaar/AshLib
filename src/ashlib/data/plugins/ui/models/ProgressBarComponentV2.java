@@ -159,7 +159,7 @@ public class ProgressBarComponentV2 implements ExtendedUIPanelPlugin {
         return getMainPanel();
     }
     public ProgressBarComponentV2(float width, float height, float currProgress,Color barColor){
-        new ProgressBarComponentV2(width, height, null, null, Misc.getDarkPlayerColor().brighter(), Misc.getBasePlayerColor(), currProgress);
+        this(width, height, null, null, Misc.getDarkPlayerColor().brighter(), Misc.getBasePlayerColor(), currProgress);
     }
 
     public ProgressBarComponentV2(float width, float height,int currentSegment, int maxSegments,Color progressionColor,int minSection) {
@@ -236,6 +236,7 @@ public class ProgressBarComponentV2 implements ExtendedUIPanelPlugin {
         tooltip.setParaFont(barTextFont);
         if(barText!=null){
             progressLabel = tooltip.createLabel(barText,Misc.getTextColor());
+            influenceLabel();
             float y = progressBar.getPosition().getHeight();
             float middle = y/2;
             progressBar.addComponent((UIComponentAPI) progressLabel).inMid();
@@ -250,6 +251,11 @@ public class ProgressBarComponentV2 implements ExtendedUIPanelPlugin {
 
 
     }
+
+    public void setBarText(String barText) {
+        this.barText = barText;
+    }
+
     public void influenceLabel(){
 
     }
