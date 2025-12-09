@@ -312,13 +312,13 @@ public class CommandTabTracker implements EveryFrameScript {
     boolean inserted = false;
     boolean insertedOnce = false;
     boolean removed = false;
-    HashMap<ButtonAPI, Object> panelMap = null;
+    transient HashMap<ButtonAPI, Object> panelMap = null;
     boolean turnedMusicOnce = false;
     private boolean needsToResetStates = false;
     public static boolean sendSignalToOpenCore = false;
-    ButtonAPI currentTab = null;
-    public LinkedHashMap<String, CommandUIPlugin> additionalPlugins = new LinkedHashMap<>();
-
+    transient ButtonAPI currentTab = null;
+    transient public LinkedHashMap<String, CommandUIPlugin> additionalPlugins = new LinkedHashMap<>();
+    String currMusicId;
 
     @Override
     public boolean isDone() {
@@ -340,11 +340,15 @@ public class CommandTabTracker implements EveryFrameScript {
             panelMap = null;
             currentTab = null;
             if(additionalPlugins!=null) {
+
                 for (CommandUIPlugin value : additionalPlugins.values()) {
                     value.clearUI(turnedMusicOnce);
                 }
+
                 additionalPlugins.clear();
             }
+            additionalPlugins = null;
+            currMusicId =null;
 
             removed = false;
             insertedOnce = false;
@@ -401,6 +405,9 @@ public class CommandTabTracker implements EveryFrameScript {
             y *= -1;
         }
         if (!removed) {
+            if(currMusicId==null){
+                currMusicId = Global.getSoundPlayer().getCurrentMusicId();
+            }
             removed = true;
             panelMap = new HashMap<>();
             panelMap.putAll(getPanelMap(mainParent));
@@ -413,9 +420,11 @@ public class CommandTabTracker implements EveryFrameScript {
                 CommandUIPlugin plugin = listener.createPlugin();
                 plugin.init(CommandTabMemoryManager.getInstance().getTabStates().get(listener.getNameForTab().toLowerCase()), mainParent);
                 panelMap.put(tryToGetButtonProd(listener.getNameForTab().toLowerCase()), plugin.getMainPanel());
+                if(additionalPlugins==null)additionalPlugins = new LinkedHashMap<>();
                 additionalPlugins.put(listener.getNameForTab().toLowerCase(), plugin);
             }
         }
+
         if (currentTab == null && CommandTabMemoryManager.getInstance().getLastCheckedTab() == null) {
             for (ButtonAPI buttonAPI : panelMap.keySet()) {
                 if (buttonAPI.isHighlighted()) {
@@ -445,24 +454,28 @@ public class CommandTabTracker implements EveryFrameScript {
                     if (plugin.doesPlayCustomSoundWhenEnteredEntireTab()) {
                         if (!turnedMusicOnce) {
                             turnedMusicOnce = true;
-                            Global.getSoundPlayer().pauseMusic();
                             plugin.playSound(null);
                         }
                     } else if (plugin.doesPlayCustomSound() && plugin.getCurrentlyChosen() != null) {
                         if (!turnedMusicOnce) {
                             turnedMusicOnce = true;
-                            Global.getSoundPlayer().pauseMusic();
                             plugin.playSound(plugin.getCurrentlyChosen());
                         }
                     }
                 } else {
+                    if(turnedMusicOnce){
+                        Global.getSoundPlayer().restartCurrentMusic();
+                    }
                     turnedMusicOnce = false;
                 }
             } else {
+                if(turnedMusicOnce){
+                    Global.getSoundPlayer().restartCurrentMusic();
+                }
                 turnedMusicOnce = false;
             }
         }
-        if (!hasComponentPresent((UIComponentAPI) panelMap.get(currentTab))) {
+        if (!hasComponentPresent((UIComponentAPI) panelMap.get(currentTab))&&currentTab!=null) {
             removePanels((ArrayList<UIComponentAPI>) ReflectionUtilis.getChildrenCopy(mainParent), mainParent, null);
             if (currentTab.getText().toLowerCase().contains("doctrine & blueprints")) {
                 UIComponentAPI comp = (UIComponentAPI) panelMap.get(currentTab);
@@ -555,7 +568,6 @@ public class CommandTabTracker implements EveryFrameScript {
                     if (obj instanceof CustomPanelAPI panelAPI) {
                         if (panelAPI.getPlugin() instanceof CommandUIPlugin plugin) {
                             if (plugin.doesPlayCustomSoundWhenEnteredEntireTab()||plugin.doesPlayCustomSound()) {
-                                plugin.pauseSound();
                             }
                         }
                     }
@@ -563,10 +575,10 @@ public class CommandTabTracker implements EveryFrameScript {
                     if (obj instanceof CustomPanelAPI panelAPI) {
                         if (panelAPI.getPlugin() instanceof CommandUIPlugin plugin) {
                             if (plugin.doesPlayCustomSoundWhenEnteredEntireTab()) {
-                                plugin.pauseSound();
+
                                 plugin.playSound(null);
                             } else if (plugin.doesPlayCustomSound() && plugin.getCurrentlyChosen() != null) {
-                                plugin.pauseSound();
+
                                 plugin.playSound(plugin.getCurrentlyChosen());
 
                             }
@@ -581,6 +593,7 @@ public class CommandTabTracker implements EveryFrameScript {
     }
 
     private boolean hasComponentPresent(UIComponentAPI component) {
+        if(component==null)return false;
         for (UIComponentAPI buttonAPI : ReflectionUtilis.getChildrenCopy(ProductionUtil.getCurrentTab())) {
             if (component.equals(buttonAPI)) {
                 return true;
@@ -627,7 +640,7 @@ public class CommandTabTracker implements EveryFrameScript {
     private Pair<CustomPanelAPI, ButtonAPI> createPanelButton(String buttonName, float width, float height, int bindingValue, boolean dissabled, TooltipMakerAPI.TooltipCreator onHoverTooltip) {
         CustomPanelAPI panel = Global.getSettings().createCustom(width, height, null);
         TooltipMakerAPI tooltipMakerAPI = panel.createUIElement(width, height, false);
-        ButtonAPI button = tooltipMakerAPI.addButton(buttonName, null, Misc.getBasePlayerColor(), Misc.getDarkPlayerColor(), Alignment.MID, CutStyle.TOP, width, height, 0f);
+        ButtonAPI button = tooltipMakerAPI.addButton(buttonName, null, Global.getSettings().getColor("buttonBg"), Global.getSettings().getColor("buttonBgDark"), Alignment.MID, CutStyle.TOP, width, height, 0f);
         button.setShortcut(bindingValue, false);
         button.setEnabled(!dissabled);
         if (onHoverTooltip != null) {

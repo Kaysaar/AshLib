@@ -14,6 +14,7 @@ import com.fs.starfarer.api.combat.ShipVariantAPI;
 import com.fs.starfarer.api.fleet.FleetMemberAPI;
 import com.fs.starfarer.api.fleet.FleetMemberType;
 import com.fs.starfarer.api.impl.campaign.econ.impl.HeavyIndustry;
+import com.fs.starfarer.api.impl.campaign.ids.Industries;
 import com.fs.starfarer.api.loading.FighterWingSpecAPI;
 import com.fs.starfarer.api.loading.WingRole;
 import com.fs.starfarer.api.ui.*;
@@ -300,6 +301,7 @@ public class AshMisc {
     public static boolean isPLayerHavingHeavyIndustry(){
         for (MarketAPI playerMarket : Misc.getPlayerMarkets(true)) {
             for (Industry industry : playerMarket.getIndustries()) {
+                if(industry.getSpec().hasTag(Industries.TAG_HEAVYINDUSTRY))return true;
                 if(industry instanceof HeavyIndustry)return true;
             }
         }
