@@ -22,7 +22,7 @@ public class ProgressBarComponentV2 implements ExtendedUIPanelPlugin {
     boolean passFirst = true;
     float progress;
     public int sections;
-    protected BaseEventIntel influencer;
+    private final transient BaseEventIntel influencer;
     String barTextFont;
     EventProgressBarAPI progressBar;
     public float getProgress() {
@@ -96,6 +96,8 @@ public class ProgressBarComponentV2 implements ExtendedUIPanelPlugin {
                 return getBarColor();
             }
         };
+        Global.getSector().removeScript(influencer);
+        Global.getSector().getListenerManager().removeListener(influencer);
         influencer.setMaxProgress(100);
         this.progress = currProgress;
 
@@ -152,6 +154,8 @@ public class ProgressBarComponentV2 implements ExtendedUIPanelPlugin {
         sliderMode = true;
         this.currentSection = currSegment;
         this.sections = maxSegments;
+        Global.getSector().removeScript(influencer);
+        Global.getSector().getListenerManager().removeListener(influencer);
         createUI();
 
     }
@@ -211,6 +215,8 @@ public class ProgressBarComponentV2 implements ExtendedUIPanelPlugin {
         sliderMode = true;
         this.currentSection = currentSegment;
         this.sections = maxSegments;
+        Global.getSector().removeScript(influencer);
+        Global.getSector().getListenerManager().removeListener(influencer);
         createUI();
 
     }
