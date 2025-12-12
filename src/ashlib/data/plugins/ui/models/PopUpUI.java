@@ -290,7 +290,7 @@ public class PopUpUI implements CustomUIPanelPlugin {
         return ReflectionUtilis.getChildrenCopy(panelAPI);
     }
 
-    private static class ProductionUtil {
+    protected static class ProductionUtil {
         public static UIPanelAPI getCoreUI() {
             CampaignUIAPI campaignUI;
             campaignUI = Global.getSector().getCampaignUI();
@@ -349,6 +349,7 @@ public class PopUpUI implements CustomUIPanelPlugin {
     public float frames;
     public CustomPanelAPI panelToInfluence;
     public ArrayList<TooltipMakerAPI> mainTooltips = new ArrayList<>();
+    public ArrayList<CustomPanelAPI> mainPanels = new ArrayList<>();
     public UILinesRenderer rendererBorder = new UILinesRenderer(0f);
     public ButtonAPI confirmButton;
     public ButtonAPI cancelButton;
@@ -375,12 +376,24 @@ public class PopUpUI implements CustomUIPanelPlugin {
         }
         mainTooltips.add(tooltipMakerAPI);
     }
+    public void addPanel(CustomPanelAPI customPanelAPI) {
+        if (mainPanels==null){
+            mainPanels = new ArrayList<>();
+        }
+        mainPanels.add(customPanelAPI);
+    }
     //  Purple Nebula
     public void removeUI() {
         for (TooltipMakerAPI mainTooltip : mainTooltips) {
             mainTooltip.setOpacity(0f);
         }
         mainTooltips.clear();
+
+        for (CustomPanelAPI mainPanel : mainPanels) {
+            mainPanel.setOpacity(0f);
+        }
+        mainPanels.clear();
+
         if (confirmButton != null) {
             confirmButton.setOpacity(0);
         }
