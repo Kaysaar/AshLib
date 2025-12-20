@@ -10,9 +10,10 @@ import com.fs.starfarer.api.util.Misc;
 import java.util.List;
 
 public class BaseSliderDialog extends BasePopUpDialog {
-    public ProgressBarComponent component;
+    public  ProgressBarComponentV2 component;
+
     public CustomPanelAPI panelToUpdate;
-    public CustomPanelAPI panelForTooltip;
+    public  CustomPanelAPI panelForTooltip;
     public int currentSegment;
     public int mult;
     public int maxSegment;
@@ -32,13 +33,12 @@ public class BaseSliderDialog extends BasePopUpDialog {
         createHeaader(panelAPI);
         panelToUpdate = panelAPI.createCustomPanel(panelAPI.getPosition().getWidth() - 30, panelAPI.getPosition().getHeight() - y, null);
         createUIForFirstTime();
-
         panelAPI.addComponent(panelToUpdate).inTL(x, y);
         createConfirmAndCancelSection(panelAPI);
     }
 
     public void createUIForFirstTime() {
-        component = new ProgressBarComponent(panelToUpdate.getPosition().getWidth() - 10, barHeight, currentSegment, maxSegment, Misc.getDarkPlayerColor().brighter().brighter(), minSection);
+        component = new ProgressBarComponentV2(panelToUpdate.getPosition().getWidth() - 10, barHeight, currentSegment, maxSegment, Misc.getDarkPlayerColor().brighter().brighter(), minSection);
         panelToUpdate.addComponent(component.getRenderingPanel()).inTL(getBarX(), getBarY());
         createTooltipUI();
 
@@ -48,7 +48,8 @@ public class BaseSliderDialog extends BasePopUpDialog {
         panelForTooltip = panelToUpdate.createCustomPanel(panelToUpdate.getPosition().getWidth(), panelToUpdate.getPosition().getHeight() - 50, null);
         TooltipMakerAPI tooltipBottom = panelForTooltip.createUIElement(panelForTooltip.getPosition().getWidth(), panelToUpdate.getPosition().getHeight() - 70 - (getBarY() + barHeight), true);
         TooltipMakerAPI tooltipTop = panelForTooltip.createUIElement(panelForTooltip.getPosition().getWidth(), getBarY(), true);
-
+        addTooltip(tooltipBottom);
+        addTooltip(tooltipTop);
         float centerX = (panelToUpdate.getPosition().getWidth() - 20) / 2;
         float centerY = barHeight / 2;
         TooltipMakerAPI tooltipOfBar = panelForTooltip.createUIElement(panelToUpdate.getPosition().getWidth() - 20, barHeight, false);
@@ -116,3 +117,4 @@ public class BaseSliderDialog extends BasePopUpDialog {
         super.processInput(events);
     }
 }
+
