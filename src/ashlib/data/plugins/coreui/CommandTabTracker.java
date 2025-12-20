@@ -392,10 +392,23 @@ public class CommandTabTracker implements EveryFrameScript {
         for (CommandTabListener listener : listeners) {
             if (tryToGetButtonProd(listener.getNameForTab().toLowerCase()) == null) {
                 if (listener.getButtonToReplace() != null) {
-                    mainParent.removeComponent(tryToGetButtonProd(vanillaButtonsOriginal.get(listener.getButtonToReplace().toLowerCase())));
-                    vanillaButtonsOriginal.put(listener.getButtonToReplace().toLowerCase(), listener.getNameForTab().toLowerCase());
+                    if(listener.getButtonToBePlacedNear()==null){
+                        ButtonAPI x = tryToGetButtonProd(listener.getButtonToReplace().toLowerCase());
+                        insertButton(x.getPosition().getX(),x.getPosition().getY(),x.getPosition().getHeight(), mainParent, listener.getNameForTab(), listener.getTooltipCreatorForButton(), listener.getWidthOfButton(), listener.getKeyBind(), !listener.shouldButtonBeEnabled());
+                        mainParent.removeComponent(x);
+                        vanillaButtonsOriginal.put(listener.getButtonToReplace().toLowerCase(), listener.getNameForTab().toLowerCase());
+                    }
+                    else{
+                        mainParent.removeComponent(tryToGetButtonProd(vanillaButtonsOriginal.get(listener.getButtonToReplace().toLowerCase())));
+                        vanillaButtonsOriginal.put(listener.getButtonToReplace().toLowerCase(), listener.getNameForTab().toLowerCase());
+                    }
+
                 }
-                insertButton(tryToGetButtonProd(vanillaButtonsOriginal.get(listener.getButtonToBePlacedNear().toLowerCase())), mainParent, listener.getNameForTab(), listener.getTooltipCreatorForButton(), tryToGetButtonProd(vanillaButtonsOriginal.get("colonies")), listener.getWidthOfButton(), listener.getKeyBind(), !listener.shouldButtonBeEnabled());
+                if(listener.getButtonToBePlacedNear()!=null){
+                    insertButton(tryToGetButtonProd(vanillaButtonsOriginal.get(listener.getButtonToBePlacedNear().toLowerCase())), mainParent, listener.getNameForTab(), listener.getTooltipCreatorForButton(), tryToGetButtonProd(vanillaButtonsOriginal.get("colonies")), listener.getWidthOfButton(), listener.getKeyBind(), !listener.shouldButtonBeEnabled());
+
+                }
+
             }
         }
 
@@ -636,7 +649,12 @@ public class CommandTabTracker implements EveryFrameScript {
         mainParent.addComponent(newButton).inTL(buttonOfReference.getPosition().getX() + buttonOfReference.getPosition().getWidth() - referenceButton.getPosition().getX() + 1, 0);
         mainParent.bringComponentToTop(newButton);
     }
+    private void insertButton(float x, float y,float height, UIPanelAPI mainParent, String name, TooltipMakerAPI.TooltipCreator creator, float size, int keyBind, boolean dissabled) {
+        ButtonAPI newButton = createPanelButton(name, size, height, keyBind, dissabled, creator).two;
 
+        mainParent.addComponent(newButton).inTL(x-mainParent.getPosition().getX(), 0);
+        mainParent.bringComponentToTop(newButton);
+    }
     private Pair<CustomPanelAPI, ButtonAPI> createPanelButton(String buttonName, float width, float height, int bindingValue, boolean dissabled, TooltipMakerAPI.TooltipCreator onHoverTooltip) {
         CustomPanelAPI panel = Global.getSettings().createCustom(width, height, null);
         TooltipMakerAPI tooltipMakerAPI = panel.createUIElement(width, height, false);
