@@ -451,15 +451,23 @@ public class PopUpUI implements CustomUIPanelPlugin {
         if (fader != null) fader.setBrightness(0.1f); // Purple Nebula
 
     }
+
+    /**
+     * Note: here is where you create UI : Methods you need to change is advance , createUI, and inputEvents handler.
+     * Remember to also use super.apply()
+     * @param panelAPI
+     */
     public void createUI(CustomPanelAPI panelAPI){
         //Note here is where you create UI : Methods you need to change is advance , createUI, and inputEvents handler
         //Also remember super.apply()
 
 
     }
+
     public float createUIMockup(CustomPanelAPI panelAPI){
         return 0f;
     }
+    
     @Override
     public void renderBelow(float alphaMult) {
         if(panelToInfluence != null){
@@ -711,6 +719,7 @@ public class PopUpUI implements CustomUIPanelPlugin {
         bottomLeft.renderAtCenter(leftX-16,panelAPI.getPosition().getY());
         bottomRight.renderAtCenter( panelAPI.getPosition().getX()+panelAPI.getPosition().getWidth(),panelAPI.getPosition().getY());
     }
+
     public ButtonAPI generateConfirmButton(TooltipMakerAPI tooltip){
         ButtonAPI button = tooltip.addButton("Confirm","confirm", Misc.getBasePlayerColor(),Misc.getDarkPlayerColor(),Alignment.MID,CutStyle.TL_BR,160,25,0f);
         button.setShortcut(Keyboard.KEY_G,true);
