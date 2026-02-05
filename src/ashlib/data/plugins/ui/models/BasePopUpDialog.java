@@ -4,9 +4,8 @@ import ashlib.data.plugins.misc.AshMisc;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.ui.*;
 import com.fs.starfarer.api.util.Misc;
-import data.kaysaar.aotd.vok.campaign.econ.globalproduction.scripts.ProductionUtil;
 
-public class BasePopUpDialog extends PopUpUI {
+public class BasePopUpDialog extends CenterPopUpUI {
     TooltipMakerAPI headerTooltip;
     String title;
     public float x,y;
@@ -66,7 +65,7 @@ public class BasePopUpDialog extends PopUpUI {
     // VoK GatheringPointDialog usage in NidavelirMainPanelPlugin
     public static void popUpDialog(BasePopUpDialog dialog, float width, float height){
         CustomPanelAPI panelAPI = Global.getSettings().createCustom(width, height, dialog);
-        UIPanelAPI panelAPI1 = ProductionUtil.getCoreUI();
-        dialog.init(panelAPI, panelAPI1.getPosition().getCenterX() - (panelAPI.getPosition().getWidth() / 2), panelAPI1.getPosition().getCenterY() + (panelAPI.getPosition().getHeight() / 2), true);
+        UIPanelAPI panelAPI1 = PopUpUI.ProductionUtil.getCoreUI();
+        dialog.init(panelAPI, panelAPI1.getPosition().getCenterX() - (panelAPI.getPosition().getWidth() / 2), panelAPI1.getPosition().getCenterY() - (panelAPI.getPosition().getHeight() / 2), true);
     }
 }
