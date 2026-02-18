@@ -1,9 +1,6 @@
 package ashlib.data.plugins.misc;
 
-import ashlib.data.plugins.ui.models.BasePopUpDialog;
-import ashlib.data.plugins.ui.models.CenterPopUpUI;
-import ashlib.data.plugins.ui.models.InstantPopUpUI;
-import ashlib.data.plugins.ui.models.PopUpUI;
+import ashlib.data.plugins.ui.models.*;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.*;
 import com.fs.starfarer.api.campaign.econ.Industry;
@@ -69,10 +66,20 @@ public class AshMisc {
         }
         return ret;
     }
+
     public static void initPopUpDialog(BasePopUpDialog dialog, float width, float height){
         CustomPanelAPI panelAPI = Global.getSettings().createCustom(width, height, dialog);
         dialog.init(panelAPI, (Global.getSettings().getScreenWidth()/2) - (panelAPI.getPosition().getWidth() / 2), (Global.getSettings().getScreenHeight()/2) - (panelAPI.getPosition().getHeight() / 2), true);
     }
+    public static void initPopUpDialog(EventPopUpDialog dialog, float width, float height){
+        CustomPanelAPI panelAPI = Global.getSettings().createCustom(width, height, dialog);
+        dialog.init(panelAPI, (Global.getSettings().getScreenWidth()/2) - (panelAPI.getPosition().getWidth() / 2), (Global.getSettings().getScreenHeight()/2) - (panelAPI.getPosition().getHeight() / 2), true);
+    }
+    public static void initPopUpDialog(CommsPopUpDialog dialog, float width, float height){
+        CustomPanelAPI panelAPI = Global.getSettings().createCustom(width, height, dialog);
+        dialog.init(panelAPI, (Global.getSettings().getScreenWidth()/2) - (panelAPI.getPosition().getWidth() / 2), (Global.getSettings().getScreenHeight()/2) - (panelAPI.getPosition().getHeight() / 2), true);
+    }
+
     public static void initPopUpDialogInVanillaDialog(BasePopUpDialog dialog, float width, float height){
         CustomPanelAPI panelAPI = Global.getSettings().createCustom(width, height, dialog);
         dialog.initForDialog(panelAPI, (Global.getSettings().getScreenWidth()/2) - (panelAPI.getPosition().getWidth() / 2), (Global.getSettings().getScreenHeight()/2) - (panelAPI.getPosition().getHeight() / 2), true);
@@ -111,13 +118,13 @@ public class AshMisc {
         CustomPanelAPI panelAPI = Global.getSettings().createCustom(width1, height1, ui);
 
         float x = component.getPosition().getX() + component.getPosition().getWidth();
-        float y = component.getPosition().getY() + component.getPosition().getHeight();
+        float y = Global.getSettings().getScreenHeight() - (component.getPosition().getY() + component.getPosition().getHeight());
         if (x + width1 >= Global.getSettings().getScreenWidth()) {
             float diff = x + width1 - Global.getSettings().getScreenWidth();
             x = x - diff - 5;
 
         }
-        if (y - height1 <= 0) {
+        if (height1 - y <= 0) {
             y = height1;
         }
         if (y > Global.getSettings().getScreenHeight()) {
@@ -139,7 +146,7 @@ public class AshMisc {
             x = x - diff - 5;
 
         }
-//        if (y - height1 <= 0) {
+//        if (height1 - y <= 0) {
 //            y = height1;
 //        }
         if (y + height1 > Global.getSettings().getScreenHeight()) {

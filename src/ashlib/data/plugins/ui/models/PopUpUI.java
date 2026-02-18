@@ -33,6 +33,7 @@ public class PopUpUI implements CustomUIPanelPlugin {
     public boolean detectedCodex = false;
     public boolean attemptedExit = false;
     protected Fader fader = null; // Purple Nebula
+
     private static class ReflectionUtilis {
         // Code taken and modified from Grand Colonies
         private static final Class<?> fieldClass;
@@ -333,6 +334,7 @@ public class PopUpUI implements CustomUIPanelPlugin {
             return core == null ? null : (UIPanelAPI) core;
         }
     }
+
     SpriteAPI blackBackground = Global.getSettings().getSprite("rendering","GlitchSquare");
     SpriteAPI borders = Global.getSettings().getSprite("rendering","GlitchSquare");
     SpriteAPI panelBackground  = Global.getSettings().getSprite("ui","panel00_center");
@@ -344,32 +346,38 @@ public class PopUpUI implements CustomUIPanelPlugin {
     SpriteAPI topRight= Global.getSettings().getSprite("ui","panel00_top_right");
     SpriteAPI bottomLeft= Global.getSettings().getSprite("ui","panel00_bot_left");
     SpriteAPI bottomRight= Global.getSettings().getSprite("ui","panel00_bot_right");
+
     public static float buttonConfirmWidth = 160;
-    UIPanelAPI parent;
+    UIPanelAPI parentUIPanel;
     public float frames;
     public CustomPanelAPI panelToInfluence;
+
     public ArrayList<TooltipMakerAPI> mainTooltips = new ArrayList<>();
     public ArrayList<CustomPanelAPI> mainPanels = new ArrayList<>();
+
     public UILinesRenderer rendererBorder = new UILinesRenderer(0f);
-    public ButtonAPI confirmButton;
-    public ButtonAPI cancelButton;
-    public boolean isDialog =true;
-    public ButtonAPI getConfirmButton() {
-        return confirmButton;
-    }
+    public List<UILinesRenderer> internalLinesRenderers = new ArrayList<>(); // Purple Nebula
 
-    public CustomPanelAPI getPanelToInfluence() {
-        return panelToInfluence;
-    }
+    public ButtonAPI confirmButton, cancelButton;
+    public String confirmButtonText = "Confirm";
+    public String cancelButtonText = "Cancel";
 
-    public ButtonAPI getCancelButton() {
-        return cancelButton;
-    }
+    public boolean isDialog = true;
+
+    public boolean confirmOnly = false;
+
     public boolean reachedMaxHeight =  false;
     public boolean pressedConfirmCancel = false; // Purple Nebula
-    float originalSizeX ,originalSizeY;
+    float goalSizeX, goalSizeY;
     float x,y;
     float initX,initY; // Purple Nebula
+
+    public void addInternalLinesRenderer(UILinesRenderer internalLinesRenderer){
+        if(internalLinesRenderers==null){
+            internalLinesRenderers = new ArrayList<>();
+        }
+        internalLinesRenderers.add(internalLinesRenderer);
+    }
     public void addTooltip(TooltipMakerAPI tooltipMakerAPI){
         if(mainTooltips==null){
             mainTooltips = new ArrayList<>();
@@ -384,6 +392,8 @@ public class PopUpUI implements CustomUIPanelPlugin {
     }
     //  Purple Nebula
     public void removeUI() {
+        internalLinesRenderers.clear();
+
         for (TooltipMakerAPI mainTooltip : mainTooltips) {
             mainTooltip.setOpacity(0f);
         }
@@ -409,44 +419,48 @@ public class PopUpUI implements CustomUIPanelPlugin {
 
     public void init(CustomPanelAPI panelAPI,float x, float y,boolean isDialog) {
         panelToInfluence = panelAPI;
-        parent =  ProductionUtil.getCoreUI();
+        parentUIPanel =  ProductionUtil.getCoreUI();
         //  Purple Nebula
         if (ReflectionUtilis.hasMethodOfName("getFader",this.panelToInfluence)) {
             this.fader = (Fader) ReflectionUtilis.invokeMethod("getFader",this.panelToInfluence);
         }
-        originalSizeX = panelAPI.getPosition().getWidth();
-        originalSizeY = panelAPI.getPosition().getHeight();
+        goalSizeX = panelAPI.getPosition().getWidth();
+        goalSizeY = panelAPI.getPosition().getHeight();
 
         panelToInfluence.getPosition().setSize(16,16);
         this.isDialog = isDialog;
 
+        this.x = x;
+        this.y = y;
         initX = x; // Purple Nebula
-        initY = this.parent.getPosition().getHeight() - y; // Purple Nebula
+        initY = this.parentUIPanel.getPosition().getHeight() - y; // Purple Nebula
 
-        parent.addComponent(panelToInfluence).inTL(x, (parent.getPosition().getHeight()-y)*2);
-        parent.bringComponentToTop(panelToInfluence);
+        parentUIPanel.addComponent(panelToInfluence).inTL(x, (parentUIPanel.getPosition().getHeight()-y)*2);
+        parentUIPanel.bringComponentToTop(panelToInfluence);
         rendererBorder.setPanel(panelToInfluence);
         if (fader != null) fader.setBrightness(0.1f);
 
     }
     public void initForDialog(CustomPanelAPI panelAPI,float x, float y,boolean isDialog) {
         panelToInfluence = panelAPI;
-        parent =  ProductionUtil.getCoreUIForDialog();
+        parentUIPanel =  ProductionUtil.getCoreUIForDialog();
         //  Purple Nebula
         if (ReflectionUtilis.hasMethodOfName("getFader",this.panelToInfluence)) {
             this.fader = (Fader) ReflectionUtilis.invokeMethod("getFader",this.panelToInfluence);
         }
-        originalSizeX = panelAPI.getPosition().getWidth();
-        originalSizeY = panelAPI.getPosition().getHeight();
+        goalSizeX = panelAPI.getPosition().getWidth();
+        goalSizeY = panelAPI.getPosition().getHeight();
 
         panelToInfluence.getPosition().setSize(16,16);
         this.isDialog = isDialog;
 
+        this.x = x;
+        this.y = y;
         initX = x; // Purple Nebula
-        initY = this.parent.getPosition().getHeight() - y; // Purple Nebula
+        initY = this.parentUIPanel.getPosition().getHeight() - y; // Purple Nebula
 
-        parent.addComponent(panelToInfluence).inTL(x, (parent.getPosition().getHeight()-y)*2);
-        parent.bringComponentToTop(panelToInfluence);
+        parentUIPanel.addComponent(panelToInfluence).inTL(x, (parentUIPanel.getPosition().getHeight()-y)*2);
+        parentUIPanel.bringComponentToTop(panelToInfluence);
         rendererBorder.setPanel(panelToInfluence);
         if (fader != null) fader.setBrightness(0.1f); // Purple Nebula
 
@@ -496,11 +510,13 @@ public class PopUpUI implements CustomUIPanelPlugin {
 
     @Override
     public void render(float alphaMult) {
-
+        for (UILinesRenderer linesRenderer : internalLinesRenderers) {
+            linesRenderer.render(alphaMult);
+        }
     }
 
     float goalYOffset;
-    float offsetTest;
+    float expandOffset;
     boolean didOnceOne = false;
     boolean didOnceTwo = false;
     @Override
@@ -512,31 +528,44 @@ public class PopUpUI implements CustomUIPanelPlugin {
             }
         }
 
+        /**
+         * A = Global.getSettings().getScreenHeight() = full height res of gameplay screen = screenHeight2
+         * B = goalSizeY = panelAPI.getPosition().getHeight(); = 250 = (max) height of panel = dialogPanelHeight2
+         * C = Y location of expanded panel = y = yPosExpanded
+         * D = distance to expand from C = B / 2 = yDistanceToExpand
+         * E = Y location of retracted panel = C + D = yPosRetracted
+         */
+        float screenHeight2 = Global.getSettings().getScreenHeight(); /// A
+        float dialogPanelHeight2 = goalSizeY; /// B
+        float yPosExpanded = y; /// C
+        float yDistanceToExpand = dialogPanelHeight2/2; /// D
+        float yPosRetracted = yPosExpanded + yDistanceToExpand; /// E
+        float leftoverBottomYSpacing2 = screenHeight2 - yPosExpanded - dialogPanelHeight2;
         // Purple Nebula
         // Draw and resize panel
         if (!didOnceOne) {
-            this.panelToInfluence.getPosition().setYAlignOffset(-initY*2);
-            goalYOffset = -initY;
-            offsetTest = goalYOffset*2;
+//            this.panelToInfluence.getPosition().setYAlignOffset(-initY*2);
+            goalYOffset = -yPosExpanded;
+            expandOffset = -yPosRetracted;
             didOnceOne = true;
         }
         if (!pressedConfirmCancel) {
             if (this.frames <= (float) this.limit) {
                 ++this.frames;
-                offsetTest += Math.abs(goalYOffset / limit);
+                expandOffset += Math.abs(yDistanceToExpand / limit);
                 float progress = this.frames / (float) this.limit;
                 if (this.frames < (float) this.limit && !this.reachedMaxHeight) {
                     fader.setDurationIn((float) limit / 20);
                     fader.fadeIn();
-                    this.panelToInfluence.getPosition().setYAlignOffset(offsetTest);
-                    this.panelToInfluence.getPosition().setSize(this.originalSizeX, this.originalSizeY * progress);
+                    this.panelToInfluence.getPosition().setYAlignOffset(expandOffset);
+                    this.panelToInfluence.getPosition().setSize(this.goalSizeX, this.goalSizeY * progress);
                     return;
                 }
 
                 if (this.frames >= (float) this.limit && !this.reachedMaxHeight) {
                     this.reachedMaxHeight = true;
-                    this.panelToInfluence.getPosition().setYAlignOffset(-initY);
-                    this.panelToInfluence.getPosition().setSize(this.originalSizeX, this.originalSizeY);
+                    this.panelToInfluence.getPosition().setYAlignOffset(goalYOffset);
+                    this.panelToInfluence.getPosition().setSize(this.goalSizeX, this.goalSizeY);
                     this.createUI(this.panelToInfluence);
                     return;
                 }
@@ -587,7 +616,7 @@ public class PopUpUI implements CustomUIPanelPlugin {
             }
             if (this.frames >= 0) {
                 --this.frames;
-                offsetTest -= Math.abs(goalYOffset / (limit));
+                expandOffset -= Math.abs(yDistanceToExpand / (limit));
                 float progress = this.frames / (float) (limit);
                 if (this.frames > 0) {
 //                    fader.setDurationOut((float) limit / 60);
@@ -595,8 +624,8 @@ public class PopUpUI implements CustomUIPanelPlugin {
                     fader.fadeOut();
 //                fader.setBrightness(test);
 //                test+=per;
-                    this.panelToInfluence.getPosition().setYAlignOffset(offsetTest);
-                    this.panelToInfluence.getPosition().setSize(this.originalSizeX, this.originalSizeY * progress);
+                    this.panelToInfluence.getPosition().setYAlignOffset(expandOffset);
+                    this.panelToInfluence.getPosition().setSize(this.goalSizeX, this.goalSizeY * progress);
 
                     return;
                 }
@@ -604,7 +633,7 @@ public class PopUpUI implements CustomUIPanelPlugin {
 //            this.blackBackground.setAlphaMult(this.blackBackground.getAlphaMult()-toRemoveAlpha);
             if (!fader.isFadingOut()) {
                 pressedConfirmCancel = false;
-                this.parent.removeComponent(this.panelToInfluence);
+                this.parentUIPanel.removeComponent(this.panelToInfluence);
                 this.onExit();
             }
 
@@ -620,9 +649,11 @@ public class PopUpUI implements CustomUIPanelPlugin {
         }
 
     }
+
     public void applyConfirmScript(){
 
     }
+
     @Override
     public void processInput(List<InputEventAPI> events) {
         if(betweenCodex!=null)return;
@@ -667,7 +698,7 @@ public class PopUpUI implements CustomUIPanelPlugin {
 
     }
     public void forceDismiss(){
-        parent.removeComponent(panelToInfluence);
+        parentUIPanel.removeComponent(panelToInfluence);
         onExit();
     }
     public void onExit(){
@@ -721,17 +752,27 @@ public class PopUpUI implements CustomUIPanelPlugin {
     }
 
     public ButtonAPI generateConfirmButton(TooltipMakerAPI tooltip){
-        ButtonAPI button = tooltip.addButton("Confirm","confirm", Misc.getBasePlayerColor(),Misc.getDarkPlayerColor(),Alignment.MID,CutStyle.TL_BR,160,25,0f);
+        ButtonAPI button = tooltip.addButton(confirmButtonText,"confirm", Misc.getBasePlayerColor(),Misc.getDarkPlayerColor(),Alignment.MID,CutStyle.TL_BR,160,25,0f);
         button.setShortcut(Keyboard.KEY_G,true);
         confirmButton = button;
         return button;
     }
     public ButtonAPI generateCancelButton(TooltipMakerAPI tooltip){
-        ButtonAPI button = tooltip.addButton("Cancel","cancel", Misc.getBasePlayerColor(),Misc.getDarkPlayerColor(),Alignment.MID,CutStyle.TL_BR,buttonConfirmWidth,25,0f);
+        ButtonAPI button = tooltip.addButton(cancelButtonText,"cancel", Misc.getBasePlayerColor(),Misc.getDarkPlayerColor(),Alignment.MID,CutStyle.TL_BR,buttonConfirmWidth,25,0f);
         button.setShortcut(Keyboard.KEY_ESCAPE,true);
         cancelButton = button;
         return button;
     }
+    public void createConfirmSection(CustomPanelAPI mainPanel) {
+        float totalWidth = buttonConfirmWidth+10;
+        TooltipMakerAPI tooltip = mainPanel.createUIElement(totalWidth,25,false);
+        tooltip.setButtonFontOrbitron20();
+        generateConfirmButton(tooltip);
+        confirmButton.getPosition().inTL(0,0);
+        float bottom = goalSizeY;
+        mainPanel.addUIElement(tooltip).inTL(mainPanel.getPosition().getWidth()-(totalWidth)-10,bottom-40);
+    }
+
     public void createConfirmAndCancelSection(CustomPanelAPI mainPanel){
         float totalWidth = buttonConfirmWidth*2+10;
         TooltipMakerAPI tooltip = mainPanel.createUIElement(totalWidth,25,false);
@@ -740,7 +781,32 @@ public class PopUpUI implements CustomUIPanelPlugin {
         generateCancelButton(tooltip);
         confirmButton.getPosition().inTL(0,0);
         cancelButton.getPosition().inTL(buttonConfirmWidth+5,0);
-        float bottom = originalSizeY;
+        float bottom = goalSizeY;
         mainPanel.addUIElement(tooltip).inTL(mainPanel.getPosition().getWidth()-(totalWidth)-10,bottom-40);
+    }
+
+
+    public CustomPanelAPI getPanelToInfluence() {
+        return panelToInfluence;
+    }
+
+    public ButtonAPI getConfirmButton() {
+        return confirmButton;
+    }
+
+    public ButtonAPI getCancelButton() {
+        return cancelButton;
+    }
+
+    public void setConfirmText(String confirmButtonText) {
+        this.confirmButtonText = confirmButtonText;
+    }
+
+    public void setCancelText(String cancelButtonText) {
+        this.cancelButtonText = cancelButtonText;
+    }
+
+    public void setConfirmOnly(boolean confirmOnly) {
+        this.confirmOnly = confirmOnly;
     }
 }
