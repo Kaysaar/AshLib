@@ -35,6 +35,7 @@ public class CenterPopUpUI implements CustomUIPanelPlugin {
     SpriteAPI topRightPanelCorner = Global.getSettings().getSprite("ui","panel00_top_right");
     SpriteAPI bottomLeftPanelCorner = Global.getSettings().getSprite("ui","panel00_bot_left");
     SpriteAPI bottomRightPanelCorner = Global.getSettings().getSprite("ui","panel00_bot_right");
+
     public static float buttonConfirmWidth = 160;
     UIPanelAPI parentUIPanel;
     public float frames;
