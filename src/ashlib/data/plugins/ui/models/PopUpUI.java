@@ -701,9 +701,22 @@ public class PopUpUI implements CustomUIPanelPlugin {
         parentUIPanel.removeComponent(panelToInfluence);
         onExit();
     }
+
+    /**
+     * Properly closes the dialog when called. Used mainly in tandem with the buttonPressed(Object buttonId) method.
+     */
+    public void closeDialog() {
+        pressedConfirmCancel = true;
+    }
+
     public void onExit(){
 
     }
+
+    /**
+     * Requires the closeDialog() method if after pressing any button the dialog is to be closed.
+     * @param buttonId
+     */
     @Override
     public void buttonPressed(Object buttonId) {
 
