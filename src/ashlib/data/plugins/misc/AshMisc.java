@@ -122,19 +122,18 @@ public class AshMisc {
         CustomPanelAPI panelAPI = Global.getSettings().createCustom(width1, height1, ui);
 
         float x = component.getPosition().getX() + component.getPosition().getWidth();
-        float y = Global.getSettings().getScreenHeight() - (component.getPosition().getY() + component.getPosition().getHeight());
+        float y = component.getPosition().getY() + component.getPosition().getHeight();
         if (x + width1 >= Global.getSettings().getScreenWidth()) {
             float diff = x + width1 - Global.getSettings().getScreenWidth();
             x = x - diff - 5;
 
         }
-        if (height1 - y <= 0) {
+        if (y - height1 <= 0) {
             y = height1;
         }
         if (y > Global.getSettings().getScreenHeight()) {
             y = Global.getSettings().getScreenHeight() - 10;
         }
-
         ui.init(panelAPI, x, y, false);
     }
     public static void placePopUpUI(CenterPopUpUI ui, ButtonAPI component, float initWidth, float initHeight) {
@@ -144,17 +143,14 @@ public class AshMisc {
         CustomPanelAPI panelAPI = Global.getSettings().createCustom(width1, height1, ui);
 
         float x = component.getPosition().getX() + component.getPosition().getWidth();
-        float y = Global.getSettings().getScreenHeight() - component.getPosition().getY() - component.getPosition().getHeight();
+        float y = component.getPosition().getY() + component.getPosition().getHeight();
         if (x + width1 >= Global.getSettings().getScreenWidth()) {
             float diff = x + width1 - Global.getSettings().getScreenWidth();
             x = x - diff - 5;
 
         }
-//        if (height1 - y <= 0) {
-//            y = height1;
-//        }
-        if (y + height1 > Global.getSettings().getScreenHeight()) {
-            y = Global.getSettings().getScreenHeight() - height1;
+        if (y - height1 <= 0) {
+            y = height1;
         }
         if (y > Global.getSettings().getScreenHeight()) {
             y = Global.getSettings().getScreenHeight() - 10;
