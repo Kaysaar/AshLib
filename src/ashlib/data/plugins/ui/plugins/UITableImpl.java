@@ -33,6 +33,18 @@ public class UITableImpl implements CustomUIPanelPlugin {
         tooltipOfImpl = panelToWorkWith.createUIElement(width, height-22, doesHaveScroller);
         tooltipOfButtons = mainPanel.createUIElement(width, 22, false);
     }
+    public static enum SortingState {
+        NON_INITIALIZED,
+        ASCENDING,
+        DESCENDING;
+    }
+    public SortingState switchState(SortingState state) {
+        if(state==SortingState.NON_INITIALIZED) return SortingState.ASCENDING;
+        if(state==SortingState.ASCENDING) return SortingState.DESCENDING;
+        if(state==SortingState.DESCENDING) return SortingState.ASCENDING;
+        return SortingState.NON_INITIALIZED;
+    }
+
     public UITableImpl(float width, float height, boolean doesHaveScroller, float xCord, float yCord) {
         this.width = width;
         this.height = height;

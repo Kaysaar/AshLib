@@ -1,5 +1,6 @@
 package ashlib.data.plugins.coreui;
 
+import ashlib.data.plugins.misc.AshMisc;
 import ashlib.data.plugins.reflection.ReflectionBetterUtilis;
 import com.fs.graphics.util.Fader;
 import com.fs.starfarer.api.EveryFrameScript;
@@ -404,9 +405,15 @@ public class CommandTabTracker implements EveryFrameScript {
                     }
 
                 }
-                if(listener.getButtonToBePlacedNear()!=null){
-                    insertButton(tryToGetButtonProd(vanillaButtonsOriginal.get(listener.getButtonToBePlacedNear().toLowerCase())), mainParent, listener.getNameForTab(), listener.getTooltipCreatorForButton(), tryToGetButtonProd(vanillaButtonsOriginal.get("colonies")), listener.getWidthOfButton(), listener.getKeyBind(), !listener.shouldButtonBeEnabled());
-
+                 if(listener.getButtonToBePlacedNear()!=null){
+                    String vanilla = vanillaButtonsOriginal.get(listener.getButtonToBePlacedNear());
+                    if(vanilla!=null){
+                        vanilla = vanilla.toLowerCase();
+                    }
+                    else{
+                        vanilla = listener.getButtonToBePlacedNear();
+                    }
+                    insertButton(tryToGetButtonProd(vanilla), mainParent, listener.getNameForTab(), listener.getTooltipCreatorForButton(), tryToGetButtonProd(vanillaButtonsOriginal.get("colonies")), listener.getWidthOfButton(), listener.getKeyBind(), !listener.shouldButtonBeEnabled());
                 }
 
             }
@@ -566,6 +573,7 @@ public class CommandTabTracker implements EveryFrameScript {
         }
 
         for (ButtonAPI buttonAPI : panelMap.keySet()) {
+
             if (buttonAPI.isChecked()) {
                 buttonAPI.setChecked(false);
                 if (!currentTab.equals(buttonAPI)) {
@@ -628,8 +636,8 @@ public class CommandTabTracker implements EveryFrameScript {
         ButtonAPI button = null;
         try {
             for (UIComponentAPI componentAPI : ReflectionUtilis.getChildrenCopy((UIPanelAPI) ProductionUtil.getCurrentTab())) {
-                if (componentAPI instanceof ButtonAPI) {
-                    if (((ButtonAPI) componentAPI).getText().toLowerCase().contains(name)) {
+                if (componentAPI instanceof ButtonAPI bt) {
+                    if (bt.getText()!=null &&AshMisc.isStringValid(bt.getText())&& bt.getText().toLowerCase().contains(name.toLowerCase())) {
                         button = (ButtonAPI) componentAPI;
                         break;
                     }
@@ -637,20 +645,24 @@ public class CommandTabTracker implements EveryFrameScript {
             }
             return button;
         } catch (Exception e) {
-
+            String message = e.getMessage();
         }
         return button;
 
     }
 
     private void insertButton(ButtonAPI buttonOfReference, UIPanelAPI mainParent, String name, TooltipMakerAPI.TooltipCreator creator, ButtonAPI referenceButton, float size, int keyBind, boolean dissabled) {
-        ButtonAPI newButton = createPanelButton(name, size, buttonOfReference.getPosition().getHeight(), keyBind, dissabled, creator).two;
+        LabelAPI label = Global.getSettings().createLabel(name,"graphics/fonts/orbitron12condensed.fnt");
+        float maxWidth = label.computeTextWidth(label.getText())+80;
+        ButtonAPI newButton = createPanelButton(name, Math.min(maxWidth,size), buttonOfReference.getPosition().getHeight(), keyBind, dissabled, creator).two;
 
         mainParent.addComponent(newButton).inTL(buttonOfReference.getPosition().getX() + buttonOfReference.getPosition().getWidth() - referenceButton.getPosition().getX() + 1, 0);
         mainParent.bringComponentToTop(newButton);
     }
     private void insertButton(float x, float y,float height, UIPanelAPI mainParent, String name, TooltipMakerAPI.TooltipCreator creator, float size, int keyBind, boolean dissabled) {
-        ButtonAPI newButton = createPanelButton(name, size, height, keyBind, dissabled, creator).two;
+        LabelAPI label = Global.getSettings().createLabel(name,"graphics/fonts/orbitron12condensed.fnt");
+        float maxWidth = label.computeTextWidth(label.getText())+60;
+        ButtonAPI newButton = createPanelButton(name, Math.min(maxWidth,size), height, keyBind, dissabled, creator).two;
 
         mainParent.addComponent(newButton).inTL(x-mainParent.getPosition().getX(), 0);
         mainParent.bringComponentToTop(newButton);
