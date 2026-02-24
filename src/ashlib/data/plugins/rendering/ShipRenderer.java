@@ -9,6 +9,7 @@ import com.fs.starfarer.api.ui.CustomPanelAPI;
 import com.fs.starfarer.api.ui.PositionAPI;
 import ashlib.data.plugins.misc.AshMisc;
 import ashlib.data.plugins.models.ShipRenderInfo;
+import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.*;
 
 public class ShipRenderer implements CustomUIPanelPlugin {
+    private static final Logger log = Logger.getLogger(ShipRenderer.class);
     LinkedHashMap<CustomPanelAPI, ShipRenderInfo.Module> partsOfShip = new LinkedHashMap<>();
     transient SpriteAPI spriteToRender = Global.getSettings().getSprite("rendering", "GlitchSquare");
     CustomPanelAPI absoultePanel = null;
@@ -112,6 +114,10 @@ public class ShipRenderer implements CustomUIPanelPlugin {
             AshMisc.startStencil(stencilMaskBorder,renderingPercentage,30);
         }
         for (Map.Entry<CustomPanelAPI, ShipRenderInfo.Module> entry : partsOfShip.entrySet()) {
+            if (entry.getValue() == null) {
+                log.error("ShipRenderer.java caught an invalid partsOfShip ShipRendererInfo.Module entry value");
+                continue;
+            }
             SpriteAPI sprite = Global.getSettings().getSprite(Global.getSettings().getHullSpec(entry.getValue().slotOnOriginal.id).getSpriteName());
             sprite.setAngle(entry.getValue().slotOnOriginal.angle);
             if(colorOverride!=null){
