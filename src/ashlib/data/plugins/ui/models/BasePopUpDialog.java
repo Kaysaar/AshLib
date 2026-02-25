@@ -5,7 +5,7 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.ui.*;
 import com.fs.starfarer.api.util.Misc;
 
-public class BasePopUpDialog extends CenterPopUpUI {
+public class BasePopUpDialog extends PopUpUI {
     TooltipMakerAPI headerTooltip;
     String title;
     public float x,y;

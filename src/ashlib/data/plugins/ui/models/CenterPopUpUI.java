@@ -303,6 +303,7 @@ public class CenterPopUpUI implements CustomUIPanelPlugin {
     public ArrayList<TooltipMakerAPI> mainTooltips = new ArrayList<>();
     public ArrayList<CustomPanelAPI> mainPanels = new ArrayList<>();
     public UILinesRenderer borderRenderer = new UILinesRenderer(0f);
+    public List<UILinesRenderer> internalLinesRenderers = new ArrayList<>(); // Purple Nebula
     public ButtonAPI confirmButton;
     public ButtonAPI cancelButton;
 
@@ -318,6 +319,7 @@ public class CenterPopUpUI implements CustomUIPanelPlugin {
     }
 
     public boolean isDialog =true;
+    public boolean confirmOnly = false;
     public boolean reachedMaxHeight =  false;
     public boolean pressedConfirmCancel = false; // Purple Nebula
 
@@ -331,6 +333,11 @@ public class CenterPopUpUI implements CustomUIPanelPlugin {
      * Pop Up UI based on Ashlib PopUpUI
      */
     public CenterPopUpUI() {
+    }
+
+    public void addInternalLinesRenderer(UILinesRenderer internalLinesRenderer) {
+        if (internalLinesRenderers == null) internalLinesRenderers = new ArrayList<>();
+        internalLinesRenderers.add(internalLinesRenderer);
     }
 
     public void addTooltip(TooltipMakerAPI tooltipMakerAPI){
@@ -725,6 +732,16 @@ public class CenterPopUpUI implements CustomUIPanelPlugin {
         button.setShortcut(Keyboard.KEY_ESCAPE,true);
         cancelButton = button;
         return button;
+    }
+
+    public void createConfirmSection(CustomPanelAPI mainPanel) {
+        float totalWidth = buttonConfirmWidth + 10;
+        TooltipMakerAPI tooltip = mainPanel.createUIElement(totalWidth, 25, false);
+        tooltip.setButtonFontOrbitron20();
+        generateConfirmButton(tooltip);
+        confirmButton.getPosition().inTL(0, 0);
+        float bottom = goalSizeY;
+        mainPanel.addUIElement(tooltip).inTL(mainPanel.getPosition().getWidth() - (totalWidth) - 10, bottom - 40);
     }
 
     public void createConfirmAndCancelSection(CustomPanelAPI mainPanel){

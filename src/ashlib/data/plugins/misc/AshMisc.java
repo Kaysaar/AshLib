@@ -69,19 +69,19 @@ public class AshMisc {
 
     public static void initPopUpDialog(BasePopUpDialog dialog, float width, float height){
         CustomPanelAPI panelAPI = Global.getSettings().createCustom(width, height, dialog);
-        dialog.init(panelAPI, (Global.getSettings().getScreenWidth()/2) - (panelAPI.getPosition().getWidth() / 2), (Global.getSettings().getScreenHeight()/2) - (panelAPI.getPosition().getHeight() / 2), true);
+        dialog.init(panelAPI, (Global.getSettings().getScreenWidth()/2) - (panelAPI.getPosition().getWidth() / 2), (Global.getSettings().getScreenHeight()/2) + (panelAPI.getPosition().getHeight() / 2), true);
     }
     public static void initPopUpDialog(EventPopUpDialog dialog, float width, float height){
         CustomPanelAPI panelAPI = Global.getSettings().createCustom(width, height, dialog);
-        dialog.init(panelAPI, (Global.getSettings().getScreenWidth()/2) - (panelAPI.getPosition().getWidth() / 2), (Global.getSettings().getScreenHeight()/2) - (panelAPI.getPosition().getHeight() / 2), true);
+        dialog.init(panelAPI, (Global.getSettings().getScreenWidth()/2) - (panelAPI.getPosition().getWidth() / 2), (Global.getSettings().getScreenHeight()/2) + (panelAPI.getPosition().getHeight() / 2), true);
     }
     public static void initPopUpDialog(OptionsEventPopUpDialog dialog){
         CustomPanelAPI panelAPI = Global.getSettings().createCustom(600, 325, dialog);
-        dialog.init(panelAPI, (Global.getSettings().getScreenWidth()/2) - (panelAPI.getPosition().getWidth() / 2), (Global.getSettings().getScreenHeight()/2) - (panelAPI.getPosition().getHeight() / 2), true);
+        dialog.init(panelAPI, (Global.getSettings().getScreenWidth()/2) - (panelAPI.getPosition().getWidth() / 2), (Global.getSettings().getScreenHeight()/2) + (panelAPI.getPosition().getHeight() / 2), true);
     }
     public static void initPopUpDialog(CommsPopUpDialog dialog, float width, float height){
         CustomPanelAPI panelAPI = Global.getSettings().createCustom(width, height, dialog);
-        dialog.init(panelAPI, (Global.getSettings().getScreenWidth()/2) - (panelAPI.getPosition().getWidth() / 2), (Global.getSettings().getScreenHeight()/2) - (panelAPI.getPosition().getHeight() / 2), true);
+        dialog.init(panelAPI, (Global.getSettings().getScreenWidth()/2) - (panelAPI.getPosition().getWidth() / 2), (Global.getSettings().getScreenHeight()/2) + (panelAPI.getPosition().getHeight() / 2), true);
     }
 
     public static void initPopUpDialogInVanillaDialog(BasePopUpDialog dialog, float width, float height){
