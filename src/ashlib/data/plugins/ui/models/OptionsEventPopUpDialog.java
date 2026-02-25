@@ -22,12 +22,17 @@ public class OptionsEventPopUpDialog extends PopUpUI {
     private String optionTwoText = "Option 2";
     private String optionThreeText = "Option 3";
 
+    private BaseTooltipCreator optionOneTooltip = null;
+    private BaseTooltipCreator optionTwoTooltip = null;
+    private BaseTooltipCreator optionThreeTooltip = null;
+
     public CustomPanelAPI mainPanel;
     private final String illustrationSprite;
     Description eventDescription;
     UILinesRenderer imageOutlineRenderer = new UILinesRenderer(0f);
 
     private ButtonAPI optionOne, optionTwo, optionThree;
+    private LabelAPI optionOneLabel, optionTwoLabel, optionThreeLabel;
 
     /**
      * Base/Default EventPUDType.COMMS_EVENT
@@ -75,16 +80,43 @@ public class OptionsEventPopUpDialog extends PopUpUI {
         this.optionOne.getPosition().inTL(0.0F, -25.0F).setSize(totalWidth, 25.0F);
         this.optionTwo.getPosition().inTL(0.0F, 10.0F).setSize(totalWidth, 25.0F);
         this.optionThree.getPosition().inTL(0.0F, 45).setSize(totalWidth, 25.0F);
+        this.optionOneLabel.getPosition().inTL(45f, -25.0f + 2.5f);
+        this.optionTwoLabel.getPosition().inTL(45f, 10.0f + 2.5f);
+        this.optionThreeLabel.getPosition().inTL(45f, 45f + 2.5f);
+
         float bottom = mainPanel.getPosition().getHeight();
         mainPanel.addUIElement(tooltip).inTL(mainPanel.getPosition().getWidth() - totalWidth - 10.0F, bottom - 40.0F);
     }
     public void generateOptionButtons(TooltipMakerAPI tooltip) {
-        optionOne = tooltip.addButton(optionOneText, "optionOne", Misc.getBasePlayerColor(), Misc.getDarkPlayerColor(), Alignment.LMID, CutStyle.TL_BR, 160.0F, 25.0F, 0.0F);
-        optionTwo = tooltip.addButton(optionTwoText, "optionTwo", Misc.getBasePlayerColor(), Misc.getDarkPlayerColor(), Alignment.LMID, CutStyle.TL_BR, 160.0F, 25.0F, 0.0F);
-        optionThree = tooltip.addButton(optionThreeText, "optionThree", Misc.getBasePlayerColor(), Misc.getDarkPlayerColor(), Alignment.LMID, CutStyle.TL_BR, 160.0F, 25.0F, 0.0F);
-        optionOne.setShortcut(Keyboard.KEY_1, true);
-        optionTwo.setShortcut(Keyboard.KEY_2, true);
-        optionThree.setShortcut(Keyboard.KEY_3, true);
+        optionOne = tooltip.addButton("", "optionOne", Misc.getBasePlayerColor(), Misc.getDarkPlayerColor(), Alignment.LMID, CutStyle.TL_BR, 160.0F, 25.0F, 0.0F);
+        optionTwo = tooltip.addButton("", "optionTwo", Misc.getBasePlayerColor(), Misc.getDarkPlayerColor(), Alignment.LMID, CutStyle.TL_BR, 160.0F, 25.0F, 0.0F);
+        optionThree = tooltip.addButton("", "optionThree", Misc.getBasePlayerColor(), Misc.getDarkPlayerColor(), Alignment.LMID, CutStyle.TL_BR, 160.0F, 25.0F, 0.0F);
+
+        try {
+            Global.getSettings().loadFont("graphics/fonts/insignia21LTaa.fnt");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        tooltip.setParaFont("graphics/fonts/insignia21LTaa.fnt");
+        optionOneLabel = tooltip.addPara(" " + optionOneText,Misc.getBasePlayerColor(),0f);
+        optionTwoLabel = tooltip.addPara(" " + optionTwoText,Misc.getBasePlayerColor(),0f);
+        optionThreeLabel = tooltip.addPara(" " + optionThreeText,Misc.getBasePlayerColor(),0f);
+        tooltip.setParaFontDefault();
+
+        optionOne.setShortcut(Keyboard.KEY_1, false);
+        optionTwo.setShortcut(Keyboard.KEY_2, false);
+        optionThree.setShortcut(Keyboard.KEY_3, false);
+
+
+        if (optionOneTooltip != null) tooltip.addTooltipTo(optionOneTooltip,optionOne, TooltipMakerAPI.TooltipLocation.ABOVE);
+        if (optionTwoTooltip != null) tooltip.addTooltipTo(optionTwoTooltip,optionTwo, TooltipMakerAPI.TooltipLocation.ABOVE);
+        if (optionThreeTooltip != null) tooltip.addTooltipTo(optionThreeTooltip,optionThree, TooltipMakerAPI.TooltipLocation.ABOVE);
+    }
+
+    public void setOptionsTooltips(BaseTooltipCreator optionOneTooltip, BaseTooltipCreator optionTwoTooltip, BaseTooltipCreator optionThreeTooltip) {
+        this.optionOneTooltip = optionOneTooltip;
+        this.optionTwoTooltip = optionTwoTooltip;
+        this.optionThreeTooltip = optionThreeTooltip;
     }
 
     public void createHeader(CustomPanelAPI panelAPI) {
