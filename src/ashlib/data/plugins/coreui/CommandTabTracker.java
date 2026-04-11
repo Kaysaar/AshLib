@@ -320,6 +320,14 @@ public class CommandTabTracker implements EveryFrameScript {
     transient ButtonAPI currentTab = null;
     transient public LinkedHashMap<String, CommandUIPlugin> additionalPlugins = new LinkedHashMap<>();
     String currMusicId;
+    /*
+     Allows CommandUIPlugin classes from other mods to set an object that will be passed to the init() method on their plugin.
+     For example, TASC's terraforming menu supports opening a particular market when the tab is switched to.
+     This is used to allow the player to open the terraforming menu with a particular colony already selected to save them
+     the hassle of navigating to it manually.
+     TASC uses this commandUiPluginArgument variable to track which market to open when the terraforming tab is opened.
+    */
+    public static Object commandUiPluginArgument = null;
 
     @Override
     public boolean isDone() {
@@ -438,7 +446,12 @@ public class CommandTabTracker implements EveryFrameScript {
             for (CommandTabListener listener : listeners) {
 
                 CommandUIPlugin plugin = listener.createPlugin();
-                plugin.init(CommandTabMemoryManager.getInstance().getTabStates().get(listener.getNameForTab().toLowerCase()), mainParent);
+                if(commandUiPluginArgument != null) {
+                    plugin.init(CommandTabMemoryManager.getInstance().getTabStates().get(listener.getNameForTab().toLowerCase()), mainParent, commandUiPluginArgument);
+                }
+                else {
+                    plugin.init(CommandTabMemoryManager.getInstance().getTabStates().get(listener.getNameForTab().toLowerCase()), mainParent);
+                }
                 panelMap.put(tryToGetButtonProd(listener.getNameForTab().toLowerCase()), plugin.getMainPanel());
                 if(additionalPlugins==null)additionalPlugins = new LinkedHashMap<>();
                 additionalPlugins.put(listener.getNameForTab().toLowerCase(), plugin);
