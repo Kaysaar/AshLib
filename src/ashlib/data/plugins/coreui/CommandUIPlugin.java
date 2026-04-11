@@ -296,6 +296,33 @@ public class CommandUIPlugin implements ExtendedUIPanelPlugin {
         return false;
     }
 
+    public void init(String panelToShowcase,Object data, Object customData)
+    {
+        /*
+         You can implement some custom logic using customData here (e.g. a market, a ship, etc.)
+         in your override in your CommandUIPlugin extension. The below snippet is working for TASC:
+
+        @Override
+        public void init(String panelToShowcase, Object data, Object customData)
+        {
+            if(customData instanceof MarketAPI)
+            {
+                init((MarketAPI) customData);
+            }
+            else
+            {
+                init(null);
+            }
+        }
+
+        @Override
+        public void init(String panelToShowcase, Object data) {
+            init(null);
+        }
+        */
+
+        this.init(panelToShowcase, data);
+    }
 
     public void init(String panelToShowcase,Object data){
         this.panelForPlugins = mainPanel.createCustomPanel(mainPanel.getPosition().getWidth(), mainPanel.getPosition().getHeight() - 45, null);
