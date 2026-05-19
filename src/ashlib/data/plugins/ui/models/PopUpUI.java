@@ -345,20 +345,20 @@ public class PopUpUI implements CustomUIPanelPlugin {
     public boolean pressedConfirmCancel = false; // Purple Nebula
 
     // Target size (expanded)
-    float goalSizeX, goalSizeY;
+    public float goalSizeX, goalSizeY;
 
     // Raw inputs (caller space)
-    float x, y;
+    public float x, y;
 
     // UI-space converted Y (this is the FIX)
-    float initYUi;
+    public float initYUi;
 
     // Animation offsets (UI-space)
-    float goalYOffset;
-    float expandOffset;
+    public float goalYOffset;
+    public float expandOffset;
 
-    boolean didOnceOne = false;
-    boolean didOnceTwo = false;
+    public boolean didOnceOne = false;
+    public boolean didOnceTwo = false;
 
     public void addInternalLinesRenderer(UILinesRenderer internalLinesRenderer) {
         if (internalLinesRenderers == null) internalLinesRenderers = new ArrayList<>();
