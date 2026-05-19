@@ -5,11 +5,12 @@ import ashlib.data.plugins.ui.models.resizable.ResizableComponent;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.BaseCustomUIPanelPlugin;
 import com.fs.starfarer.api.campaign.PlanetAPI;
+import com.fs.starfarer.api.campaign.SectorEntityToken;
 import com.fs.starfarer.api.ui.CustomPanelAPI;
 import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.combat.CombatViewport;
 import com.fs.starfarer.combat.entities.terrain.Planet;
-import data.kaysaar.aotd.vok.campaign.econ.globalproduction.impl.nidavelir.NidavelirComplexMegastructure;
+import data.kaysaar.aotd.vok.campaign.econ.conditions.NidavelirComplex;
 import data.kaysaar.aotd.vok.misc.AoTDMisc;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Vector2f;
@@ -24,13 +25,17 @@ public class PlanetRenderResizableComponent extends MapEntityComponent {
     PlanetAPI planet;
     boolean discovered = true;
 
-    public static void renderPlanet(String spec, Vector2f point, float size, float facing, float pitch,
+    public static void renderPlanet(SectorEntityToken token, String spec, Vector2f point, float size, float facing, float pitch,
                                     float surfaceAngle, float atmoAngle, float alpha, boolean isStar,
                                     float tilt, float scale) {
 
+        renderPlanet(token,spec,point,size,facing,pitch,surfaceAngle,atmoAngle,alpha,isStar,tilt,scale,null);
+    }
+    public static void renderPlanet(SectorEntityToken token,String spec, Vector2f point, float size, float facing, float pitch,
+                                    float surfaceAngle, float atmoAngle, float alpha, boolean isStar,
+                                    float tilt, float scale,Color color) {
         CombatViewport vv = new CombatViewport(point.x, point.y, 200, 200);
         vv.setAlphaMult(alpha);
-
         Planet planet = new Planet(spec, size, 0, point);
         planet.setScale(scale);
         planet.setRadius(size);
@@ -39,11 +44,36 @@ public class PlanetRenderResizableComponent extends MapEntityComponent {
         planet.setFacing(facing - 90f);
         planet.setTilt(tilt);
         planet.setPitch(pitch);
-
+        if(color!=null) {
+            planet.setLightColorOverride(color);
+        }
         planet.renderSphere(vv);
         planet.renderStarGlow(vv);
-    }
+        if(token!=null){
+            if (Global.getSettings().getModManager().isModEnabled("aotd_vok")) {
+                if(token.getMarket()!=null&&token.getMarket().hasCondition("aotd_nidavelir_complex")){
+                    renderPlanet(
+                            null,
+                            NidavelirComplex.getComplexCondition(token.getMarket()).getShipyardVisual().type,
+                            point,
+                            size + 35f,
+                            facing-90f,
+                            pitch,
+                            0f,
+                            surfaceAngle / 2f,
+                            alpha,
+                            isStar,
+                            tilt,
+                            scale,color
+                    );
+                }
 
+
+            }
+        }
+
+
+    }
     public PlanetRenderResizableComponent(float size, String type, boolean isStar) {
         super(null);
         this.originalSize = size;
@@ -86,7 +116,7 @@ public class PlanetRenderResizableComponent extends MapEntityComponent {
             float tilt = 0f;
             float pitch = 0f;
             float facing = 90f;
-            renderPlanet(
+            renderPlanet(null,
                     planetType,
                     new Vector2f(cx, cy),
                     originalSize,
@@ -100,7 +130,7 @@ public class PlanetRenderResizableComponent extends MapEntityComponent {
                     scale
             );
         } else {
-            renderPlanet(
+            renderPlanet(planet,
                     planet.getTypeId(),
                     new Vector2f(cx, cy),
                     originalSize,
@@ -116,10 +146,10 @@ public class PlanetRenderResizableComponent extends MapEntityComponent {
 
             // Optional: overlay megastructure if present
             if (Global.getSettings().getModManager().isModEnabled("aotd_vok")) {
-                NidavelirComplexMegastructure mega = AoTDMisc.getNidavelir();
-                if (mega != null && mega.getEntityTiedTo() != null && mega.getEntityTiedTo().equals(planet)) {
+                if(planet.getMarket()!=null&&planet.getMarket().hasCondition("aotd_nidavelir_complex")){
                     renderPlanet(
-                            mega.shipyard.type,
+                            null,
+                            NidavelirComplex.getComplexCondition(planet.getMarket()).getShipyardVisual().type,
                             new Vector2f(cx, cy),
                             originalSize + 35f,
                             planet.getFacing(),
@@ -132,6 +162,8 @@ public class PlanetRenderResizableComponent extends MapEntityComponent {
                             scale
                     );
                 }
+
+
             }
         }
 

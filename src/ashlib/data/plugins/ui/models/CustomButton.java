@@ -13,22 +13,38 @@ import java.awt.*;
 import java.util.List;
 
 public class CustomButton implements ExtendedUIPanelPlugin {
+
+    public interface ButtonEventListener{
+        public  void onButtonClicked();
+    }
+    public ButtonEventListener listener;
+
+    public void setListener(ButtonEventListener listener) {
+        this.listener = listener;
+    }
+
     public ButtonAPI mainButton;
     public CustomPanelAPI panel;
     public Object buttonData;
     public  float width,height;
     public float indent;
     public Color base,bg,bright;
+    public CustomPanelAPI mainPanel;
     public CustomPanelAPI getPanel() {
-        return panel;
+        return mainPanel;
     }
     public transient SpriteAPI arrows = Global.getSettings().getSprite("ui","sortIcon");
     public CustomPanelAPI panelIndicator;
     public boolean arrowPointDown = true;
     public boolean isWithArrow;
+    public boolean isCreated = false;
+
+    public boolean isCreated() {
+        return isCreated;
+    }
 
     public CustomButton(float width, float height, Object buttonData, float indent, Color base, Color bg, Color bright ) {
-        panel = Global.getSettings().createCustom(width,height,this);
+        mainPanel = Global.getSettings().createCustom(width,height,this);
         this.width = width;
         this.height = height;
         this.buttonData = buttonData;
@@ -81,7 +97,10 @@ public class CustomButton implements ExtendedUIPanelPlugin {
 
     @Override
     public void advance(float amount) {
-
+        if(listener!=null&&mainButton.isChecked()){
+            mainButton.setChecked(false);
+            listener.onButtonClicked();
+        }
     }
 
     @Override
@@ -102,11 +121,15 @@ public class CustomButton implements ExtendedUIPanelPlugin {
 
     @Override
     public CustomPanelAPI getMainPanel() {
-        return panel;
+        return mainPanel;
     }
 
     @Override
     public void createUI() {
+        if(panel!=null){
+            mainPanel.removeComponent(panel);
+        }
+        panel = Global.getSettings().createCustom(width,height,null);
         TooltipMakerAPI tooltip = panel.createUIElement(width,height,false);
         TooltipMakerAPI tooltipActualButton = panel.createUIElement(width,height,false);
         mainButton = createButton(tooltipActualButton);
@@ -114,6 +137,8 @@ public class CustomButton implements ExtendedUIPanelPlugin {
 
         panel.addUIElement(tooltipActualButton).inTL(0,0);
         panel.addUIElement(tooltip).inTL(0,0);
+        mainPanel.addComponent(panel).inTL(0,0);
+        isCreated = true;
     }
 
     @Override
