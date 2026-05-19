@@ -8,6 +8,21 @@ import com.fs.starfarer.api.campaign.listeners.PlayerColonizationListener;
 
 
 public class CommandTabInterceptor implements CoreUITabListener, PlayerColonizationListener {
+    /*
+    We need this because if the player has the colony management screen open, the "param" argument gets overridden
+    by the MarketAPI object even if you try to set the argument yourself, like the below snippet:
+
+    CommandCustomData commandCustomData = new CommandCustomData("terraforming", null);
+    Global.getSector().getCampaignUI().showCoreUITab(CoreUITabId.OUTPOSTS, commandCustomData);
+
+     With the param argument getting overridden with the MarketAPI object, we must use some other mechanism to track
+     which tab to open, so I'm using this static variable here. To use this, the following snippet works:
+
+     import ashlib.data.plugins.coreui.CommandTabInterceptor;
+     CommandTabInterceptor.tabIdToSwitchToUponOpen = "terraforming";
+     */
+    public static String tabIdToSwitchToUponOpen = null;
+
     @Override
     public void reportAboutToOpenCoreTab(CoreUITabId tab, Object param) {
         if (param instanceof String) {
@@ -29,6 +44,11 @@ public class CommandTabInterceptor implements CoreUITabListener, PlayerColonizat
             if(data.getSubTabId()!=null){
                 CommandTabMemoryManager.getInstance().getTabStates().put(data.getCommandId(),data.getSubTabId());
             }
+        }
+        if(tabIdToSwitchToUponOpen != null)
+        {
+            CommandTabMemoryManager.getInstance().setLastCheckedTab(tabIdToSwitchToUponOpen);
+            tabIdToSwitchToUponOpen = null;
         }
         CommandTabTracker.sendSignalToOpenCore = true;
     }
