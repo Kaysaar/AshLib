@@ -71,14 +71,11 @@ public class    ResizableComponent implements CustomUIPanelPlugin {
             float yBotA = absolutePanel.getPosition().getY();
             float yTopA = absolutePanel.getPosition().getY() + absolutePanel.getPosition().getHeight();
             boolean toReturn = detector.determineIfHoversOverButton(xLeftA, yTopA, xRightA, yTopA, xLeftA, yBotA, xRightA, yBotA, x, y) && hoversOverB;
-            if(toReturn&&getTooltipOnHoverPanel().getPosition().isSuspendRecompute()){
-                getTooltipOnHoverPanel().getPosition().inTL(0,0);
+            if (toReturn) {
+                adjustTooltipOnHoverPanelToViewport();
                 getTooltipOnHoverPanel().getPosition().setSuspendRecompute(false);
-            }
-            else if (!toReturn){
-                getTooltipOnHoverPanel().getPosition().inTL(-100000,-100000);
+            } else {
                 getTooltipOnHoverPanel().getPosition().setSuspendRecompute(true);
-
             }
             return toReturn;
         }
@@ -88,18 +85,75 @@ public class    ResizableComponent implements CustomUIPanelPlugin {
     }
 
     public CustomPanelAPI getTooltipOnHoverPanel() {
-        if(tooltipOnHoverPanel == null) {
-            tooltipOnHoverPanel = Global.getSettings().createCustom(originalWidth*scale,originalHeight*scale,null);
-            componentPanel.addComponent(tooltipOnHoverPanel).inTL(0,0);
+        if (tooltipOnHoverPanel == null) {
+            tooltipOnHoverPanel = Global.getSettings().createCustom(
+                    Math.max(1f, componentPanel.getPosition().getWidth()),
+                    Math.max(1f, componentPanel.getPosition().getHeight()),
+                    null
+            );
+            componentPanel.addComponent(tooltipOnHoverPanel).inTL(0, 0);
         }
 
+        adjustTooltipOnHoverPanelToViewport();
         return tooltipOnHoverPanel;
     }
+    protected void adjustTooltipOnHoverPanelToViewport() {
+        if (tooltipOnHoverPanel == null || componentPanel == null) return;
 
+        float compX = componentPanel.getPosition().getX();
+        float compY = componentPanel.getPosition().getY();
+        float compW = componentPanel.getPosition().getWidth();
+        float compH = componentPanel.getPosition().getHeight();
+
+        if (absolutePanel == null) {
+            tooltipOnHoverPanel.getPosition().setSize(compW, compH);
+            tooltipOnHoverPanel.getPosition().inTL(0, 0);
+            return;
+        }
+
+        float absX = absolutePanel.getPosition().getX();
+        float absY = absolutePanel.getPosition().getY();
+        float absW = absolutePanel.getPosition().getWidth();
+        float absH = absolutePanel.getPosition().getHeight();
+
+        float compLeft   = compX;
+        float compRight  = compX + compW;
+        float compBottom = compY;
+        float compTop    = compY + compH;
+
+        float absLeft   = absX;
+        float absRight  = absX + absW;
+        float absBottom = absY;
+        float absTop    = absY + absH;
+
+        float visibleLeft   = Math.max(compLeft, absLeft);
+        float visibleRight  = Math.min(compRight, absRight);
+        float visibleBottom = Math.max(compBottom, absBottom);
+        float visibleTop    = Math.min(compTop, absTop);
+
+        float visibleW = visibleRight - visibleLeft;
+        float visibleH = visibleTop - visibleBottom;
+
+        if (visibleW <= 0f || visibleH <= 0f) {
+            // Nothing visible inside viewport.
+            // Keep panel valid, but place it outside usable area.
+            tooltipOnHoverPanel.getPosition().setSize(compW, compH);
+            tooltipOnHoverPanel.getPosition().inTL(-compW - 10000f, -compH - 10000f);
+            return;
+        }
+
+        // Convert visible rect from absolute coordinates into local coordinates inside componentPanel.
+        float localX = visibleLeft - compLeft;
+        float localY = compTop - visibleTop;
+
+        tooltipOnHoverPanel.getPosition().setSize(visibleW, visibleH);
+        tooltipOnHoverPanel.getPosition().inTL(localX, localY);
+    }
     public void resize(float scale){
         this.scale = scale;
         componentPanel.getPosition().setSize(Math.round(originalWidth * scale), Math.round(originalHeight * scale));
-        getTooltipOnHoverPanel().getPosition().setSize(Math.round(originalWidth * scale), Math.round(originalHeight * scale));
+        getTooltipOnHoverPanel();
+        adjustTooltipOnHoverPanelToViewport();
         componentPanel.getPosition().setLocation(0,0).inTL(Math.round(originalCoords.x*scale- (movingCords.x)),Math.round(originalCoords.y*scale+ (movingCords.y)));
 
         for (UIComponentAPI componentAPI : ReflectionUtilis.getChildrenCopy(componentPanel)) {

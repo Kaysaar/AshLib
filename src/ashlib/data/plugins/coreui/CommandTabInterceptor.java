@@ -16,6 +16,11 @@ public class CommandTabInterceptor implements CoreUITabListener, PlayerColonizat
               CommandTabMemoryManager.getInstance().setLastCheckedTab("income");
             }
         }
+        if(tabIdToSwitchToUponOpen != null)
+        {
+            CommandTabMemoryManager.getInstance().setLastCheckedTab(tabIdToSwitchToUponOpen);
+            tabIdToSwitchToUponOpen = null;
+        }
         if(param instanceof MarketAPI){
             CommandTabMemoryManager.getInstance().setLastCheckedTab("colonies");
         }
@@ -27,7 +32,7 @@ public class CommandTabInterceptor implements CoreUITabListener, PlayerColonizat
         }
         CommandTabTracker.sendSignalToOpenCore = true;
     }
-
+    public static String tabIdToSwitchToUponOpen = null;
     @Override
     public void reportPlayerColonizedPlanet(PlanetAPI planet) {
 

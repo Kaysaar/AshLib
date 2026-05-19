@@ -1,6 +1,7 @@
 package ashlib.data.plugins.misc;
 
 import ashlib.data.plugins.ui.models.*;
+import ashlib.data.plugins.ui.plugins.UITableImpl;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.*;
 import com.fs.starfarer.api.campaign.econ.Industry;
@@ -12,7 +13,9 @@ import com.fs.starfarer.api.combat.ShipVariantAPI;
 import com.fs.starfarer.api.fleet.FleetMemberAPI;
 import com.fs.starfarer.api.fleet.FleetMemberType;
 import com.fs.starfarer.api.impl.campaign.econ.impl.HeavyIndustry;
+import com.fs.starfarer.api.impl.campaign.ids.Factions;
 import com.fs.starfarer.api.impl.campaign.ids.Industries;
+import com.fs.starfarer.api.impl.campaign.ids.MemFlags;
 import com.fs.starfarer.api.loading.FighterWingSpecAPI;
 import com.fs.starfarer.api.loading.WingRole;
 import com.fs.starfarer.api.ui.*;
@@ -28,6 +31,8 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
+
+import static com.fs.starfarer.api.util.Misc.isMilitary;
 
 public class AshMisc {
     @Nullable
@@ -53,6 +58,36 @@ public class AshMisc {
 
         return variantId;
     }
+    public static FactionAPI getClaimingFaction(SectorEntityToken planet) {
+        if (planet.getStarSystem() != null) {
+            String claimedBy = planet.getStarSystem().getMemoryWithoutUpdate().getString(MemFlags.CLAIMING_FACTION);
+            if (claimedBy != null) {
+                return Global.getSector().getFaction(claimedBy);
+            }
+        }
+
+        int max = 0;
+        MarketAPI result = null;
+        List<MarketAPI> markets = Global.getSector().getEconomy().getMarkets(planet.getContainingLocation());
+        for (MarketAPI curr : markets) {
+            if (curr.isHidden()) continue;
+            int score = curr.getSize();
+            for (MarketAPI other : markets) {
+                if (other != curr && other.getFaction() == curr.getFaction()) score++;
+            }
+            if (isMilitary(curr)) score += 10;
+            if (score > max) {
+                max = score;
+                result = curr;
+            }
+        }
+        if (result == null) return null;
+
+        return result.getFaction();
+    }
+    public static List<MarketAPI> getMarketsUnderPlayer() {
+        return Misc.getFactionMarkets(Factions.PLAYER).stream().filter(x -> !x.hasTag("nex_playerOutpost")).toList();
+    }
     public static String getSurveyString(MarketAPI.SurveyLevel level){
         String ret = "";
         if(level.equals(MarketAPI.SurveyLevel.SEEN)){
@@ -66,7 +101,24 @@ public class AshMisc {
         }
         return ret;
     }
+    public static <T> void sortByState(List list, UITableImpl.SortingState state, Comparator<T> comparator) {
+        if (list == null || comparator == null || state == null) return;
 
+        if (state == UITableImpl.SortingState.ASCENDING) {
+            list.sort(comparator);
+        } else {
+            list.sort(comparator.reversed());
+        }
+    }
+    public static UITableImpl.SortingState switchState(UITableImpl.SortingState state) {
+        if (state == UITableImpl.SortingState.NON_INITIALIZED) {
+            return UITableImpl.SortingState.ASCENDING;
+        } else if (state == UITableImpl.SortingState.ASCENDING) {
+            return UITableImpl.SortingState.DESCENDING;
+        } else {
+            return state == UITableImpl.SortingState.DESCENDING ? UITableImpl.SortingState.ASCENDING : UITableImpl.SortingState.NON_INITIALIZED;
+        }
+    }
     public static void initPopUpDialog(BasePopUpDialog dialog, float width, float height){
         CustomPanelAPI panelAPI = Global.getSettings().createCustom(width, height, dialog);
         dialog.init(panelAPI, (Global.getSettings().getScreenWidth()/2) - (panelAPI.getPosition().getWidth() / 2), (Global.getSettings().getScreenHeight()/2) + (panelAPI.getPosition().getHeight() / 2), true);

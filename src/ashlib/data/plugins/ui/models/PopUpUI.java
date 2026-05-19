@@ -798,8 +798,13 @@ public class PopUpUI implements CustomUIPanelPlugin {
         tooltip.setButtonFontOrbitron20();
         generateConfirmButton(tooltip);
         generateCancelButton(tooltip);
-        confirmButton.getPosition().inTL(0, 0);
-        cancelButton.getPosition().inTL(buttonConfirmWidth + 5, 0);
+        if(confirmButton!=null){
+            confirmButton.getPosition().inTL(0, 0);
+
+        }
+        if(cancelButton!=null){
+            cancelButton.getPosition().inTL(buttonConfirmWidth + 5, 0);
+        }
         float bottom = goalSizeY;
         mainPanel.addUIElement(tooltip).inTL(mainPanel.getPosition().getWidth() - (totalWidth) - 10, bottom - 40);
     }

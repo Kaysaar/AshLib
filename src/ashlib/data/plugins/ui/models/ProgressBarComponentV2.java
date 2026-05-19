@@ -105,7 +105,7 @@ public class ProgressBarComponentV2 implements ExtendedUIPanelPlugin {
 
     }
     public ProgressBarComponentV2(float width, float height, String barText,String barTextFont, Color barColor, Color barBrackets,int currSegment,int maxSegments,int minSegments){
-        mainPanel = Global.getSettings().createCustom(width,height,this);
+        mainPanel = Global.getSettings().createCustom(width+10,height,this);
         if(!AshMisc.isStringValid(barTextFont)){
             this.barTextFont = Fonts.DEFAULT_SMALL;
         }
@@ -310,7 +310,7 @@ public class ProgressBarComponentV2 implements ExtendedUIPanelPlugin {
     public void processInput(List<InputEventAPI> events) {
         if(sliderMode){
             float affectedWidth = progressBar.getPosition().getWidth()-7;
-            float sectionWidth = affectedWidth/sections;
+            float sectionWidth = (affectedWidth/(sections+1));
             float mouseX = Global.getSettings().getMouseX();
             float mouseY = Global.getSettings().getMouseY();
 
@@ -318,13 +318,19 @@ public class ProgressBarComponentV2 implements ExtendedUIPanelPlugin {
                 float topY = progressBar.getPosition().getY()+progressBar.getPosition().getHeight();
                 float bottomY = progressBar.getPosition().getY();
                 if(event.isConsumed())continue;
+                if(!mainPanel.getPosition().containsEvent(event)){
+                    if(event.isMouseMoveEvent()){
+                        pressingMouse = false;
+                    }
+                    continue;
+                }
                 if(event.isLMBDownEvent())pressingMouse = true;
                 if(event.isLMBUpEvent()){
                     pressingMouse = false;
                     detectedOnceInPerimiters = false;
                 }
                 if(pressingMouse){
-                    float prevX = progressBar.getPosition().getX()+sectionWidth+10;
+                    float prevX = (progressBar.getPosition().getX()+sectionWidth+10);
                     if(detectedOnceInPerimiters){
                         topY = Global.getSettings().getScreenHeight();
                         bottomY = 0;
@@ -340,6 +346,7 @@ public class ProgressBarComponentV2 implements ExtendedUIPanelPlugin {
                         }
                         prevX += sectionWidth;
                     }
+
                 }
                 if(event.getEventValue()== Keyboard.KEY_LEFT){
                     if(!passFirst){
@@ -376,8 +383,10 @@ public class ProgressBarComponentV2 implements ExtendedUIPanelPlugin {
 
 
                 }
+                if(progressBar.getPosition().containsEvent(event)){
+                    event.consume();
+                }
 
-                event.consume();
 
             }
         }
