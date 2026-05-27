@@ -470,7 +470,6 @@ public class CommandTabTracker implements EveryFrameScript {
             for (CommandTabListener listener : listeners) {
 
                 CommandUIPlugin plugin = listener.createPlugin();
-                plugin.init(CommandTabMemoryManager.getInstance().getTabStates().get(listener.getNameForTab().toLowerCase()), mainParent);
                 if(commandUiPluginArgument != null) {
                     plugin.init(CommandTabMemoryManager.getInstance().getTabStates().get(listener.getNameForTab().toLowerCase()), mainParent, commandUiPluginArgument);
                 }
