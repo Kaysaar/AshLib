@@ -1,12 +1,12 @@
 {
     "masterVersionFile":"https://raw.githubusercontent.com/Kaysaar/AshLib/refs/heads/master/ashlib.version",
     "modName":"Ashlib",
-    "directDownloadURL":"https://drive.google.com/uc?export=download&id=1PIlXgKygyCIY0FCfuhlQRSrbkzHsSPZx",
+    "directDownloadURL":"https://github.com/Kaysaar/AshLib/releases/latest/download/Ashlib_.zip",
     "modThreadId":30808,
     "modVersion":
     {
         "major":2,
         "minor":2,
-        "patch":0
+        "patch":1
      }
 }
