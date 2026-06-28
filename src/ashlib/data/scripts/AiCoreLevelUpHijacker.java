@@ -374,7 +374,9 @@ public class AiCoreLevelUpHijacker implements EveryFrameScript {
 
                 if(comps.size()>=19 &&button==null){
                     UIComponentAPI comp = comps.get(comps.size()-1);
-                    UIPanelAPI compPanel = (UIPanelAPI) ReflectionUtilis.invokeMethod("getInnerPanel",comp);
+                    if (ReflectionUtilis.hasMethodOfName("getInnerPanel",comp)) {
+
+                        UIPanelAPI compPanel = (UIPanelAPI) ReflectionUtilis.invokeMethod("getInnerPanel",comp);
                         boolean found = officerRowData!=null;
                         if(found){
                             for (UIComponentAPI componentAPI : ReflectionUtilis.getChildrenCopy(compPanel)) {
@@ -400,6 +402,8 @@ public class AiCoreLevelUpHijacker implements EveryFrameScript {
                                 }
                             }
                         }
+
+                    }
 
 
 
