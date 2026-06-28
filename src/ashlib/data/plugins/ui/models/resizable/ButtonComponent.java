@@ -169,6 +169,7 @@ public  boolean blockButtonInstance = false;
                         Global.getSoundPlayer().playUISound("ui_button_pressed", 1, 1);
                         initBreak();
                         performActionOnClick(false);
+                        performActionOnClickWithEvent(false,event);
                         event.consume();
                     }
                 }
@@ -177,6 +178,7 @@ public  boolean blockButtonInstance = false;
                         Global.getSoundPlayer().playUISound("ui_button_pressed", 1, 1);
                         initBreak();
                         performActionOnClick(true);
+                        performActionOnClickWithEvent(true,event);
                         event.consume();
                     }
                 }
@@ -188,7 +190,9 @@ public  boolean blockButtonInstance = false;
     public void performActionOnClick(boolean isRightClick) {
 
     }
+    public void performActionOnClickWithEvent(boolean isRightClick,InputEventAPI eventAPI) {
 
+    }
     @Override
     public void buttonPressed(Object buttonId) {
 
