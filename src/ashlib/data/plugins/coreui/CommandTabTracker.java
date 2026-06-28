@@ -534,9 +534,9 @@ public class CommandTabTracker implements EveryFrameScript {
             } else {
                 if (turnedMusicOnce) {
                     Global.getSoundPlayer().restartCurrentMusic();
-                    isUsingVanillaDefMusic = true;
                     mustSwitchToVanilla = false;
                 }
+                isUsingVanillaDefMusic = true;
                 turnedMusicOnce = false;
             }
         }
