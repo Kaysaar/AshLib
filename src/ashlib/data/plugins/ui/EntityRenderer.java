@@ -6,17 +6,20 @@ import com.fs.starfarer.api.campaign.CustomEntitySpecAPI;
 import com.fs.starfarer.api.campaign.PlanetAPI;
 import com.fs.starfarer.api.campaign.SectorEntityToken;
 import com.fs.starfarer.api.graphics.SpriteAPI;
+import com.fs.starfarer.api.impl.campaign.aotd_entities.NidavelirShipyardVisual;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.ui.CustomPanelAPI;
 import com.fs.starfarer.api.ui.PositionAPI;
 import com.fs.starfarer.combat.CombatViewport;
 import com.fs.starfarer.combat.entities.terrain.Planet;
+import data.kaysaar.aotd.vok.campaign.econ.conditions.NidavelirComplex;
 import org.lwjgl.util.vector.Vector2f;
 
 import java.util.List;
 
 public class EntityRenderer implements ExtendedUIPanelPlugin {
     Planet graphics;
+    Planet secondGraphics;
     CustomPanelAPI mainPanel;
     SpriteAPI sprite;
     public EntityRenderer(SectorEntityToken tokenOfMarket, float boxSize) {
@@ -29,6 +32,21 @@ public class EntityRenderer implements ExtendedUIPanelPlugin {
             graphics.setPitch(original.getPitch());
             float scale = boxSize/(planet.getRadius()*2);
             graphics.setScale(scale);
+            if(Global.getSettings().getModManager().isModEnabled("aotd_vok")&&tokenOfMarket.getMarket()!=null){
+                if(NidavelirComplex.getComplexCondition(tokenOfMarket.getMarket())!=null){
+                    NidavelirShipyardVisual visual = NidavelirComplex.getComplexCondition(tokenOfMarket.getMarket()).getShipyardVisual();
+                    if(visual.isDestroyed()){
+                        secondGraphics = new Planet("aotd_nidavelir_destroyed",planet.getRadius()+35,0f,new Vector2f());
+                    }
+                    else{
+                        secondGraphics = new Planet("aotd_nidavelir",planet.getRadius()+35,0f,new Vector2f());
+                    }
+                    secondGraphics.setTilt(planet.getSpec().getTilt());
+                    secondGraphics.setAngle(original.getAngle());
+                    secondGraphics.setPitch(original.getPitch());
+                    secondGraphics.setScale(scale);
+                }
+            }
         }
         else if (tokenOfMarket != null){
             CustomEntitySpecAPI spec = tokenOfMarket.getCustomEntitySpec();
@@ -91,7 +109,10 @@ public class EntityRenderer implements ExtendedUIPanelPlugin {
             CombatViewport sphereViewport = new CombatViewport(refX, refY, refWidth, refHeight);
             graphics.getLocation().set(refCenterX, refCenterY);
             graphics.renderSphere(sphereViewport);
-
+            if(secondGraphics!=null){
+                secondGraphics.getLocation().set(refCenterX, refCenterY);
+                secondGraphics.renderSphere(sphereViewport);
+            }
         } else if (sprite!=null) {
             sprite.renderAtCenter(mainPanel.getPosition().getCenterX(), mainPanel.getPosition().getCenterY());
         }
@@ -101,6 +122,9 @@ public class EntityRenderer implements ExtendedUIPanelPlugin {
     public void advance(float amount) {
         if(graphics!=null){
             graphics.advance(amount);
+        }
+        if(secondGraphics!=null){
+            secondGraphics.advance(amount);
         }
     }
 
