@@ -64,7 +64,13 @@ public class EntityWithNameComponent implements ExtendedUIPanelPlugin {
             color = planet.getSpec().getIconColor();
             if(factionStars){
                 if(planet.isStar()||planet.isBlackHole()){
-                    color = getClaimingFaction(planet).getBaseUIColor();
+                    if(getClaimingFaction(planet)==null){
+                        color = Misc.getGrayColor();
+                    }
+                    else{
+                        color = getClaimingFaction(planet).getBaseUIColor();
+                    }
+
                 }
             }
 
