@@ -81,7 +81,7 @@ public class AshMisc {
                 result = curr;
             }
         }
-        if (result == null) return null;
+        if (result == null) return Global.getSector().getFaction(Factions.NEUTRAL);
 
         return result.getFaction();
     }
