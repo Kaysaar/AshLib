@@ -622,6 +622,9 @@ public class CommandTabTracker implements EveryFrameScript {
 
             if (buttonAPI.isChecked()) {
                 buttonAPI.setChecked(false);
+                if (currentTab == null) {
+                    currentTab = buttonAPI;
+                }
                 if (!currentTab.equals(buttonAPI)) {
                     Global.getSector().getListenerManager().getListeners(CommandTabListener.class).stream().sorted(new Comparator<CommandTabListener>() {
                         @Override
