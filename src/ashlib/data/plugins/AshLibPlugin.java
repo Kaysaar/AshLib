@@ -3,12 +3,16 @@ package ashlib.data.plugins;
 import ashlib.data.plugins.coreui.CommandTabInterceptor;
 import ashlib.data.plugins.coreui.CommandTabTracker;
 import ashlib.data.plugins.handlers.AICoreSkillPollHandler;
-import ashlib.data.plugins.ui.template.SlipSpaceUIListener;
+import ashlib.data.plugins.ui.CustomCampaignFleetViewer;
 import ashlib.data.scripts.AiCoreLevelUpHijacker;
 import ashlib.data.scripts.AshReplaceAISkills;;
 import com.fs.starfarer.api.BaseModPlugin;
 import ashlib.data.plugins.repositories.ShipRenderInfoRepo;
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.campaign.fleet.CampaignFleet;
+import com.fs.starfarer.campaign.fleet.CampaignFleetView;
+
+import java.awt.*;
 
 public class AshLibPlugin extends BaseModPlugin {
     public static String fontInsigniaMedium = "graphics/fonts/insignia17LTaa.fnt";
@@ -29,6 +33,7 @@ public class AshLibPlugin extends BaseModPlugin {
         Global.getSector().addTransientScript(new AiCoreLevelUpHijacker());
         Global.getSector().addTransientScript(new CommandTabTracker());
         Global.getSector().getListenerManager().addListener(new CommandTabInterceptor(),true);
+        CustomCampaignFleetViewer.replacePlayerFleetView();
 //        Global.getSector().getListenerManager().addListener(new SlipSpaceUIListener(),true);
     }
 }
