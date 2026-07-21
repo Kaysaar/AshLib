@@ -1,0 +1,23 @@
+{
+  "shmolib_campaign_star_siphon_in": [
+    {
+      "file": "sounds/shmolib/campaign/star_siphon_in.ogg",
+      "pitch": 1.0,
+      "volume": 0.8
+    }
+  ],
+  "shmolib_campaign_star_siphon_out": [
+    {
+      "file": "sounds/shmolib/campaign/star_siphon_out.ogg",
+      "pitch": 1.0,
+      "volume": 0.8
+    }
+  ],
+  "shmolib_campaign_star_siphon_loop": [
+    {
+      "file": "sounds/shmolib/campaign/star_siphon_loop.ogg",
+      "pitch": 1.0,
+      "volume": 1.0
+    }
+  ]
+}
