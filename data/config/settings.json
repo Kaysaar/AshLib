@@ -1,13 +1,32 @@
 {
-	
-	"plugins":{		
+
+	"plugins":{
 		"AshWeaponRepoPlugin":"ashlib.data.plugins.AshWeaponRepoPlugin"
 	},
 	"graphics":{
 		"rendering":{
-            "GlitchSquare":"graphics/fx/solid_square.png",
+			"GlitchSquare":"graphics/fx/solid_square.png",
+			"lightning_bolt":"graphics/fx/emp_arcs.png",
 
-		}
+		},
+		"ui":{
+			"aotd_text_glow":"graphics/fx/text_glow.png",
+			"aotd_holder":"graphics/fx/holder.png"
+		},
+		"shmolib_campaign": {
+			"particle_confetti_rectangle": "graphics/shmolib/campaign/particles/confetti_rectangle.png",
+			"particle_confetti_triangle": "graphics/shmolib/campaign/particles/confetti_triangle.png",
+			"particle_confetti_hexagon": "graphics/shmolib/campaign/particles/confetti_hexagon.png",
+			"particle_confetti_circle": "graphics/shmolib/campaign/particles/confetti_circle.png",
+			"particle_confetti_halfcircle": "graphics/shmolib/campaign/particles/confetti_halfcircle.png",
+			"particle_confetti_square": "graphics/shmolib/campaign/particles/confetti_square.png",
+
+			"fx_flare": "graphics/shmolib/campaign/fx/flare.png",
+			"fx_flash": "graphics/shmolib/campaign/fx/flash.png",
+			"fx_siphon_background": "graphics/shmolib/campaign/fx/siphon_background.png",
+			"fx_siphon_midground": "graphics/shmolib/campaign/fx/siphon_midground.png",
+			"fx_siphon_foreground": "graphics/shmolib/campaign/fx/siphon_foreground.png"
+		},
 
 	}
 }
