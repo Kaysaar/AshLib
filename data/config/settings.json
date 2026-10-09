@@ -1,5 +1,15 @@
 {
 
+	"ashlibCampaignBar": {
+		"enabled": true,
+		"enableNavigableBarPoc": true,
+		"enableBarInjection": true,
+		"enableDevHotkeys": false,
+		"captureOnceAfterLoad": false,
+		"enableUiRefreshDiagnostics": false,
+		"barLayout": "119/6"
+	},
+
 	"plugins":{
 		"AshWeaponRepoPlugin":"ashlib.data.plugins.AshWeaponRepoPlugin"
 	},

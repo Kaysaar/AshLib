@@ -38,6 +38,7 @@ public class AshLibPlugin extends BaseModPlugin {
         Global.getSector().addTransientScript(new CommandTabTracker());
         Global.getSector().getListenerManager().addListener(new CommandTabInterceptor(),true);
         CustomCampaignFleetViewer.replacePlayerFleetView();
+        ashlib.data.plugins.coreui.campaignbar.api.CampaignBar.onGameLoad();
         Option.of(Global.getSector().getEntityById(EXAMPLE_STAR_SIPHON_INSTANCE_ID)).match(
                 (e) -> {},
                 this::initializeExampleStarSiphonInstance

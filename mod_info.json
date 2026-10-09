@@ -1,0 +1,14 @@
+{
+  "id": "ashlib",
+  "name": "AshLib (Campaign Bar fork)",
+  "author": "Kaysaar",
+  "utility": "false",
+  "version": "2.2.3",
+  "description": "Library containing functions mainly used by me: Kaysaar",
+  "gameVersion": "0.98a-RC8",
+  "jars": ["jars/ashlib.jar"],
+  "dependencies": [
+    {"id": "lw_lazylib", "name": "LazyLib", "version": "3.0"}
+  ],
+  "modPlugin": "ashlib.data.plugins.AshLibPlugin"
+}
