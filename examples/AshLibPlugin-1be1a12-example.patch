@@ -1,0 +1,11 @@
+diff --git a/src/ashlib/data/plugins/AshLibPlugin.java b/src/ashlib/data/plugins/AshLibPlugin.java
+--- a/src/ashlib/data/plugins/AshLibPlugin.java
++++ b/src/ashlib/data/plugins/AshLibPlugin.java
+@@ -26,6 +26,7 @@
+ 
+         ShipRenderInfoRepo.populateRenderInfoRepo();
+         AICoreSkillPollHandler.getInstance();
++        ashlib.examples.campaignbar.TestButtonExample.registerIfEnabled();
+ 
+ 
+     }
