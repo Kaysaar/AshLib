@@ -22,6 +22,7 @@ import com.fs.starfarer.api.ui.*;
 import com.fs.starfarer.api.util.Misc;
 
 import org.jetbrains.annotations.Nullable;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.lwjgl.opengl.GL11;
@@ -58,6 +59,14 @@ public class AshMisc {
 
         return variantId;
     }
+    public static ArrayList<JSONObject> getObjectListFromArray(JSONArray array) throws JSONException {
+        ArrayList<JSONObject> list = new ArrayList<>();
+        for (int i = 0; i < array.length(); i++) {
+            list.add(array.getJSONObject(i));
+        }
+        return list;
+    }
+
     public static FactionAPI getClaimingFaction(SectorEntityToken planet) {
         if (planet.getStarSystem() != null) {
             String claimedBy = planet.getStarSystem().getMemoryWithoutUpdate().getString(MemFlags.CLAIMING_FACTION);

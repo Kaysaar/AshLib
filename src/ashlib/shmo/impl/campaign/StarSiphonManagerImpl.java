@@ -212,5 +212,4 @@ class StarSiphonManagerImpl extends BaseCustomEntityPlugin implements StarSiphon
                         SoundParams.of(ShmoSounds.Campaign.STAR_SIPHON_LOOP)
                 );
     }
-
 }

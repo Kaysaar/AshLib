@@ -22,7 +22,7 @@ public class ShmoEntityToken extends BaseCampaignEntity implements SectorEntityT
 
     @Override
     public float getRadius() {
-        return 100;
+        return 0;
     }
 
     @Override

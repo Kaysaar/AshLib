@@ -2,6 +2,8 @@ package ashlib.data.plugins;
 
 import ashlib.data.plugins.coreui.CommandTabInterceptor;
 import ashlib.data.plugins.coreui.CommandTabTracker;
+import ashlib.data.plugins.events.AshlibBaseEventManager;
+import ashlib.data.plugins.events.AshlibExampleEvent;
 import ashlib.data.plugins.handlers.AICoreSkillPollHandler;
 import ashlib.data.plugins.ui.CustomCampaignFleetViewer;
 import ashlib.data.scripts.AiCoreLevelUpHijacker;
@@ -11,6 +13,7 @@ import ashlib.shmo.example.ExampleCustomEntities;
 import com.fs.starfarer.api.BaseModPlugin;
 import ashlib.data.plugins.repositories.ShipRenderInfoRepo;
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.campaign.fleet.CampaignFleet;
 import com.fs.starfarer.campaign.fleet.CampaignFleetView;
 
@@ -38,10 +41,14 @@ public class AshLibPlugin extends BaseModPlugin {
         Global.getSector().addTransientScript(new CommandTabTracker());
         Global.getSector().getListenerManager().addListener(new CommandTabInterceptor(),true);
         CustomCampaignFleetViewer.replacePlayerFleetView();
-        Option.of(Global.getSector().getEntityById(EXAMPLE_STAR_SIPHON_INSTANCE_ID)).match(
-                (e) -> {},
-                this::initializeExampleStarSiphonInstance
-        );
+        if(Global.getSector().getEntityById(EXAMPLE_STAR_SIPHON_INSTANCE_ID)!=null) {
+            Misc.fadeAndExpire(Global.getSector().getEntityById(EXAMPLE_STAR_SIPHON_INSTANCE_ID),0f);
+
+        }
+//        Option.of(Global.getSector().getEntityById(EXAMPLE_STAR_SIPHON_INSTANCE_ID)).match(
+//                (e) -> {},
+//                this::initializeExampleStarSiphonInstance
+//        );
 //        Global.getSector().getListenerManager().addListener(new SlipSpaceUIListener(),true);
     }
     private void initializeExampleStarSiphonInstance() {
