@@ -6,8 +6,8 @@ import com.fs.starfarer.api.ui.*;
 import com.fs.starfarer.api.util.Misc;
 
 public class BasePopUpDialog extends PopUpUI {
-    TooltipMakerAPI headerTooltip;
-    String title;
+    public TooltipMakerAPI headerTooltip;
+    public String title;
     public float x,y;
     public BasePopUpDialog(String headerTitle) {
         this.title = headerTitle;

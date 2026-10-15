@@ -590,6 +590,7 @@ class StarSiphonEffectImpl implements StarSiphonEffect {
             return;
         }
         final SavableSprite sprite = getFlashSprite();
+        sprite.tryFetchSprite();
         if (sprite.isInvalid()) {
             return;
         }
@@ -633,6 +634,7 @@ class StarSiphonEffectImpl implements StarSiphonEffect {
             return;
         }
         final SavableSprite sprite = getFlareSprite();
+        sprite.tryFetchSprite();
         if (sprite.isInvalid()) {
             return;
         }
@@ -719,11 +721,12 @@ class StarSiphonEffectImpl implements StarSiphonEffect {
         setStateProgress(0.0f);
         setTargetIntensity(0.75f);
         setTargetFlareIntensity(1.0f);
-        setFlashIntensity(1.0f);
+        setFlashIntensity(0.6f);
 
-        getInSound().playSound(consumerLocation, new Vector2f());
-        getInSound().playSound(locationDifference, new Vector2f());
+        getOutSound().playSound(consumerLocation, new Vector2f());
+        getOutSound().playSound(starLocation, new Vector2f());
     }
+
 
     private void advanceInState(float amount) {
         increaseStateProgress(amount * IN_STATE_PROGRESS_RATE);
@@ -809,8 +812,8 @@ class StarSiphonEffectImpl implements StarSiphonEffect {
         particleSystem.addRepulsor("squeeze1",  squeezePosition1, 200f * forceMultiplier, squeezeDistance);
         particleSystem.addRepulsor("squeeze2",  squeezePosition2, 200f * forceMultiplier, squeezeDistance);
 
-        getLoopSound().playLoop(getLoopSoundSource1(), consumerLocation, new Vector2f(), 0.1f, 1.0f);
-        getLoopSound().playLoop(getLoopSoundSource2(), emitterPosition, new Vector2f(), 0.1f, 1.0f);
+        getLoopSound().playLoop(getLoopSoundSource1(), getConsumer().unwrap().getLocation(), new Vector2f(), 0.1f, 1.0f);
+        getLoopSound().playLoop(getLoopSoundSource2(), getStar().unwrap().getLocation(), new Vector2f(), 0.1f, 1.0f);
     }
 
     private void exitActiveState() {
@@ -831,7 +834,7 @@ class StarSiphonEffectImpl implements StarSiphonEffect {
         setTargetFlareIntensity(0.0f);
 
         getOutSound().playSound(consumerLocation, new Vector2f());
-        getOutSound().playSound(locationDifference, new Vector2f());
+        getOutSound().playSound(starLocation, new Vector2f());
     }
 
     private void advanceOutState(float amount) {
@@ -886,6 +889,7 @@ class StarSiphonEffectImpl implements StarSiphonEffect {
             float alphaMult,
             Color tint
     ) {
+        texture.tryFetchSprite();
         if (texture.isInvalid()) { return; }
 
         final ViewportAPI viewport = Global.getSector().getViewport();
@@ -915,7 +919,7 @@ class StarSiphonEffectImpl implements StarSiphonEffect {
         final Vector2f startPosition = Vector2f.add(starLocation, locationDifference, null);
 
         finalLocationDifference.normalise();
-        finalLocationDifference.scale(starRadius + consumerRadius + (finalDistance * Math.min(1.0f, 0.5f + 25.0f * EasingFunctions.easeOutSine(intensity))));
+        finalLocationDifference.scale(starRadius - consumerRadius + (finalDistance * Math.min(1.0f, 0.5f + 25.0f * EasingFunctions.easeOutSine(intensity))));
         final Vector2f endPosition = Vector2f.add(starLocation, finalLocationDifference, null);
 
         Utilities.renderPinchedShape(

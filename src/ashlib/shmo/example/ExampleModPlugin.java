@@ -13,16 +13,16 @@ public class ExampleModPlugin extends BaseModPlugin {
         super.onGameLoad(newGame);
         if (newGame) { return; }
 
-        Option.of(Global.getSector().getEntityById(EXAMPLE_STAR_SIPHON_INSTANCE_ID)).match(
-                (e) -> {},
-                this::initializeExampleStarSiphonInstance
-        );
+//        Option.of(Global.getSector().getEntityById(EXAMPLE_STAR_SIPHON_INSTANCE_ID)).match(
+//                (e) -> {},
+//                this::initializeExampleStarSiphonInstance
+//        );
     }
 
     @Override
     public void onNewGameAfterEconomyLoad() {
         super.onNewGameAfterTimePass();
-        initializeExampleStarSiphonInstance();
+//        initializeExampleStarSiphonInstance();
     }
 
     private void initializeExampleStarSiphonInstance() {

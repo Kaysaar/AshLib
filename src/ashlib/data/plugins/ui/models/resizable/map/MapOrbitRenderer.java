@@ -38,14 +38,19 @@ public class MapOrbitRenderer extends ResizableComponent {
         int segments = Math.max(32, Math.min(512, (int) (circumference / 4f)));
 
         // --- OpenGL state ---
+        // --- OpenGL state ---
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_COLOR_BUFFER_BIT | GL11.GL_LINE_BIT);
         try {
             GL11.glDisable(GL11.GL_TEXTURE_2D);
+
             GL11.glEnable(GL11.GL_BLEND);
+            GL11.glEnable(GL11.GL_LINE_SMOOTH);
+            GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
+
             GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
             // Line width scales with UI scale (clamped for sanity)
-            float lw = Math.max(1f, lineWidth * scale);
+            float lw = Math.max(1.5f, lineWidth * scale);
             GL11.glLineWidth(lw);
 
             float a = (color.getAlpha() / 255f) * alphaMult;
@@ -61,6 +66,8 @@ public class MapOrbitRenderer extends ResizableComponent {
             }
             GL11.glEnd();
         } finally {
+            GL11.glDisable(GL11.GL_LINE_SMOOTH);
+            GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_DONT_CARE);
             GL11.glPopAttrib();
         }
     }
