@@ -38,12 +38,9 @@ import static com.fs.starfarer.api.util.Misc.isMilitary;
 public class AshMisc {
     @Nullable
     public static String getVaraint(ShipHullSpecAPI allShipHullSpec) {
-        // Answered from VariantIndex (end of file) instead of scanning every variant id on
-        // each call. Returns the same id the previous two scans returned.
         String hullId = allShipHullSpec.getHullId();
         String variantId = VariantIndex.get().lookup(hullId);
         if (variantId != null && !Global.getSettings().doesVariantExist(variantId)) {
-            // The variant was removed after the index was built.
             variantId = VariantIndex.rebuild().lookup(hullId);
         }
         return variantId;
@@ -916,27 +913,14 @@ public class AshMisc {
         return "Warship";
     }
 
-    /*
-     * Index behind getVaraint(). Scanning getAllVariantIds() (a fresh copy of every variant id)
-     * on each call, twice when the hull has no variant file, was slow with large mod lists, and
-     * AotD's production UI calls it once per ship spec on every refresh and filter change.
-     *
-     * The index is built in one pass over the same list, keeping the first match per key, so a
-     * lookup returns exactly what the linear scans return. Variants can be added or removed at
-     * runtime, so it is rebuilt once it is older than MAX_AGE_NANOS, and getVaraint() rebuilds
-     * immediately if a returned id no longer exists.
-     */
     private static final class VariantIndex {
         private static final long MAX_AGE_NANOS = 1_000_000_000L;
         private static volatile VariantIndex instance;
 
         private final long builtAt = System.nanoTime();
         private final List<String> ids;
-        /** First id with a variant file, per hull id (the first linear scan). */
         private final Map<String, String> byHullId = new HashMap<>();
-        /** First id per case-folded id (the "_Hull" linear scan). */
         private final Map<String, String> byFoldedId = new HashMap<>();
-        /** False if any id has surrogate chars, where fold() may not match equalsIgnoreCase. */
         private final boolean foldExact;
 
         private VariantIndex() {
@@ -978,7 +962,6 @@ public class AshMisc {
             return null;
         }
 
-        /** Equal for two surrogate-free strings exactly when equalsIgnoreCase is true. */
         private static String fold(String s) {
             char[] chars = s.toCharArray();
             for (int i = 0; i < chars.length; i++) {
