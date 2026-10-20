@@ -38,25 +38,11 @@ import static com.fs.starfarer.api.util.Misc.isMilitary;
 public class AshMisc {
     @Nullable
     public static String getVaraint(ShipHullSpecAPI allShipHullSpec) {
-        String variantId = null;
-        for (String allVariantId : Global.getSettings().getAllVariantIds()) {
-            ShipVariantAPI variant = Global.getSettings().getVariant(allVariantId);
-            if (variant.getVariantFilePath() == null) continue;
-            if (variant.getHullSpec().getHullId().equals(allShipHullSpec.getHullId())) {
-                variantId = allVariantId;
-                break;
-            }
+        String hullId = allShipHullSpec.getHullId();
+        String variantId = VariantIndex.get().lookup(hullId);
+        if (variantId != null && !Global.getSettings().doesVariantExist(variantId)) {
+            variantId = VariantIndex.rebuild().lookup(hullId);
         }
-        if (variantId == null) {
-            final String withHull = allShipHullSpec.getHullId() + "_Hull";
-            for (String id : Global.getSettings().getAllVariantIds()) {
-                if (withHull.equalsIgnoreCase(id)) {
-                    variantId = id;
-                    break;
-                }
-            }
-        }
-
         return variantId;
     }
     public static ArrayList<JSONObject> getObjectListFromArray(JSONArray array) throws JSONException {
@@ -925,6 +911,71 @@ public class AshMisc {
             return "Carrier";
         }
         return "Warship";
+    }
+
+    private static final class VariantIndex {
+        private static final long MAX_AGE_NANOS = 1_000_000_000L;
+        private static volatile VariantIndex instance;
+
+        private final long builtAt = System.nanoTime();
+        private final List<String> ids;
+        private final Map<String, String> byHullId = new HashMap<>();
+        private final Map<String, String> byFoldedId = new HashMap<>();
+        private final boolean foldExact;
+
+        private VariantIndex() {
+            ids = Global.getSettings().getAllVariantIds();
+            boolean exact = true;
+            for (String id : ids) {
+                if (hasSurrogate(id)) exact = false;
+                byFoldedId.putIfAbsent(fold(id), id);
+                ShipVariantAPI variant = Global.getSettings().getVariant(id);
+                if (variant == null || variant.getVariantFilePath() == null) continue;
+                if (variant.getHullSpec() == null || variant.getHullSpec().getHullId() == null) continue;
+                byHullId.putIfAbsent(variant.getHullSpec().getHullId(), id);
+            }
+            foldExact = exact;
+        }
+
+        static VariantIndex get() {
+            VariantIndex index = instance;
+            if (index == null || System.nanoTime() - index.builtAt > MAX_AGE_NANOS) {
+                index = rebuild();
+            }
+            return index;
+        }
+
+        static VariantIndex rebuild() {
+            VariantIndex index = new VariantIndex();
+            instance = index;
+            return index;
+        }
+
+        String lookup(String hullId) {
+            String variantId = byHullId.get(hullId);
+            if (variantId != null) return variantId;
+            final String withHull = hullId + "_Hull";
+            if (foldExact && !hasSurrogate(withHull)) return byFoldedId.get(fold(withHull));
+            for (String id : ids) {
+                if (withHull.equalsIgnoreCase(id)) return id;
+            }
+            return null;
+        }
+
+        private static String fold(String s) {
+            char[] chars = s.toCharArray();
+            for (int i = 0; i < chars.length; i++) {
+                chars[i] = Character.toLowerCase(Character.toUpperCase(chars[i]));
+            }
+            return new String(chars);
+        }
+
+        private static boolean hasSurrogate(String s) {
+            for (int i = 0; i < s.length(); i++) {
+                if (Character.isSurrogate(s.charAt(i))) return true;
+            }
+            return false;
+        }
     }
 
 
