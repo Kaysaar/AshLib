@@ -46,10 +46,13 @@ class AshReplaceAISkills :EveryFrameScript {
             return getFieldTypeHandle.invoke(field) as Any
         }
 
-        private fun hasMethodOfName(name: String, instance: Any): Boolean {
+        private val methodNameCache = HashMap<Class<*>, HashMap<String, Boolean>>()
 
-            val instancesOfMethods: Array<out Any> = instance.javaClass.methods
-            return instancesOfMethods.any { getMethodNameHandle.invoke(it) == name }
+        private fun hasMethodOfName(name: String, instance: Any): Boolean {
+            return methodNameCache.getOrPut(instance.javaClass) { HashMap() }.getOrPut(name) {
+                val instancesOfMethods: Array<out Any> = instance.javaClass.methods
+                instancesOfMethods.any { getMethodNameHandle.invoke(it) == name }
+            }
         }
 
 
