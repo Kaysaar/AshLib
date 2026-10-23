@@ -26,10 +26,6 @@ public class PlanetRenderResizableComponent extends MapEntityComponent {
     PlanetAPI planet;
     boolean discovered = true;
 
-    // The Planet objects this component draws with, kept between frames (by type and size: the planet itself, and
-    // VoK's Nidavelir shipyard overlay). A Planet compiles its GL display lists the first time it's drawn and keeps
-    // them until its radius, scale or alpha changes; angles, facing, tilt and pitch are applied outside the lists.
-    // A new Planet every frame recompiled them on every frame.
     private final HashMap<String, Planet> keptPlanets = new HashMap<>();
 
     private Planet keptPlanet(String type, float size, Vector2f point) {
@@ -45,7 +41,6 @@ public class PlanetRenderResizableComponent extends MapEntityComponent {
         return planet;
     }
 
-    /** renderPlanet(...) (no light color) drawing with this component's kept Planet objects. */
     private void renderKeptPlanet(SectorEntityToken token, String spec, Vector2f point, float size, float facing, float pitch,
                                   float surfaceAngle, float atmoAngle, float alpha, boolean isStar,
                                   float tilt, float scale) {
