@@ -18,9 +18,6 @@ public class ShipRenderInfo {
     static String filepath2 = "data/hulls/skins/";
     static String format2= ".skin";
 
-    // While ShipRenderInfoRepo.populateRenderInfoRepo() runs, each .ship/.variant file is parsed once instead of
-    // every time it's needed (several times per hull). Only on the thread that started it, and nothing here
-    // changes the JSON it reads, so sharing one parsed copy gives the same results.
     private static HashMap<String, Object> jsonMemo;
     private static Thread jsonMemoThread;
 
