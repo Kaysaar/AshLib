@@ -322,6 +322,36 @@ public class CommandTabTracker implements EveryFrameScript {
     transient public LinkedHashMap<String, CommandUIPlugin> additionalPlugins = new LinkedHashMap<>();
     String currMusicId;
     boolean initalized = false;
+
+    private static final class PendingTab {
+        final List<CommandTabListener> listeners = new ArrayList<>();
+        final UIPanelAPI mainParent;
+        final Object pluginArgument;
+
+        PendingTab(UIPanelAPI mainParent, Object pluginArgument) {
+            this.mainParent = mainParent;
+            this.pluginArgument = pluginArgument;
+        }
+    }
+
+    transient List<String> tabOrder = null;
+
+    private Object panel(ButtonAPI button) {
+        Object obj = panelMap.get(button);
+        if (!(obj instanceof PendingTab pending)) return obj;
+        for (CommandTabListener listener : pending.listeners) {
+            CommandUIPlugin plugin = listener.createPlugin();
+            if (pending.pluginArgument != null) {
+                plugin.init(CommandTabMemoryManager.getInstance().getTabStates().get(listener.getNameForTab().toLowerCase()), pending.mainParent, pending.pluginArgument);
+            } else {
+                plugin.init(CommandTabMemoryManager.getInstance().getTabStates().get(listener.getNameForTab().toLowerCase()), pending.mainParent);
+            }
+            panelMap.put(button, plugin.getMainPanel());
+            if (additionalPlugins == null) additionalPlugins = new LinkedHashMap<>();
+            additionalPlugins.put(listener.getNameForTab().toLowerCase(), plugin);
+        }
+        return panelMap.get(button);
+    }
     /*
        Allows CommandUIPlugin classes from other mods to set an object that will be passed to the init() method on their plugin.
        For example, TASC's terraforming menu supports opening a particular market when the tab is switched to.
@@ -350,14 +380,24 @@ public class CommandTabTracker implements EveryFrameScript {
             panelMap = null;
             currentTab = null;
             if (additionalPlugins != null) {
-
+                List<CommandUIPlugin> plugins = new ArrayList<>();
+                if (tabOrder != null) {
+                    for (String name : tabOrder) {
+                        CommandUIPlugin plugin = additionalPlugins.get(name);
+                        if (plugin != null && !plugins.contains(plugin)) plugins.add(plugin);
+                    }
+                }
                 for (CommandUIPlugin value : additionalPlugins.values()) {
+                    if (!plugins.contains(value)) plugins.add(value);
+                }
+                for (CommandUIPlugin value : plugins) {
                     value.clearUI(turnedMusicOnce);
                 }
 
                 additionalPlugins.clear();
             }
             additionalPlugins = null;
+            tabOrder = null;
 
             currMusicId = null;
             if (!isUsingVanillaDefMusic && mustSwitchToVanilla) {
@@ -378,16 +418,16 @@ public class CommandTabTracker implements EveryFrameScript {
         UIPanelAPI mainParent = ProductionUtil.getCurrentTab();
         if (mainParent == null) return;
         if (initalized) {
-            if (!hasComponentPresent((UIComponentAPI) panelMap.get(currentTab)) && currentTab != null) {
+            if (!hasComponentPresent((UIComponentAPI) panel(currentTab)) && currentTab != null) {
                 removePanels((ArrayList<UIComponentAPI>) ReflectionUtilis.getChildrenCopy(mainParent), mainParent, null);
                 if (currentTab.getText().toLowerCase().contains("doctrine & blueprints")) {
-                    UIComponentAPI comp = (UIComponentAPI) panelMap.get(currentTab);
+                    UIComponentAPI comp = (UIComponentAPI) panel(currentTab);
                     ReflectionUtilis.invokeMethodWithAutoProjection("createIfNeeded", comp);
                     ReflectionUtilis.invokeMethodWithAutoProjection("restoreTableUIState", comp);
                     Fader fader = (Fader) ReflectionUtilis.invokeMethodWithAutoProjection("getFader", comp);
                     fader.forceIn();
                 }
-                mainParent.addComponent((UIComponentAPI) panelMap.get(currentTab));
+                mainParent.addComponent((UIComponentAPI) panel(currentTab));
                 CommandTabMemoryManager.getInstance().setLastCheckedTab(currentTab.getText().toLowerCase());
 
             }
@@ -467,18 +507,13 @@ public class CommandTabTracker implements EveryFrameScript {
                 listener.performRecalculations((UIComponentAPI) panelMap.get(button));
             }
             removePanels((ArrayList<UIComponentAPI>) ReflectionUtilis.getChildrenCopy(mainParent), mainParent, null);
+            tabOrder = new ArrayList<>();
             for (CommandTabListener listener : listeners) {
-
-                CommandUIPlugin plugin = listener.createPlugin();
-                if(commandUiPluginArgument != null) {
-                    plugin.init(CommandTabMemoryManager.getInstance().getTabStates().get(listener.getNameForTab().toLowerCase()), mainParent, commandUiPluginArgument);
-                }
-                else {
-                    plugin.init(CommandTabMemoryManager.getInstance().getTabStates().get(listener.getNameForTab().toLowerCase()), mainParent);
-                }
-                panelMap.put(tryToGetButtonProd(listener.getNameForTab().toLowerCase()), plugin.getMainPanel());
-                if (additionalPlugins == null) additionalPlugins = new LinkedHashMap<>();
-                additionalPlugins.put(listener.getNameForTab().toLowerCase(), plugin);
+                ButtonAPI tabButton = tryToGetButtonProd(listener.getNameForTab().toLowerCase());
+                PendingTab pending = panelMap.get(tabButton) instanceof PendingTab p ? p : new PendingTab(mainParent, commandUiPluginArgument);
+                pending.listeners.add(listener);
+                panelMap.put(tabButton, pending);
+                tabOrder.add(listener.getNameForTab().toLowerCase());
             }
         }
 
@@ -487,6 +522,7 @@ public class CommandTabTracker implements EveryFrameScript {
                 if (buttonAPI.isHighlighted()) {
                     currentTab = buttonAPI;
                     CommandTabMemoryManager.getInstance().setLastCheckedTab(currentTab.getText().toLowerCase());
+                    panel(currentTab);
                     for (CommandTabListener listener : listeners) {
                         listener.performRefresh(currentTab);
                     }
@@ -498,6 +534,7 @@ public class CommandTabTracker implements EveryFrameScript {
             for (ButtonAPI buttonAPI : panelMap.keySet()) {
                 if (buttonAPI.getText().toLowerCase().contains(CommandTabMemoryManager.getInstance().getLastCheckedTab())) {
                     currentTab = buttonAPI;
+                    panel(currentTab);
                     for (CommandTabListener listener : listeners) {
                         listener.performRefresh(currentTab);
                     }
@@ -505,7 +542,7 @@ public class CommandTabTracker implements EveryFrameScript {
             }
         }
         if (currentTab != null) {
-            Object obj = panelMap.get(currentTab);
+            Object obj = panel(currentTab);
             if (obj instanceof CustomPanelAPI panelAPI) {
                 if (panelAPI.getPlugin() instanceof CommandUIPlugin plugin) {
                     if (plugin.doesPlayCustomSoundWhenEnteredEntireTab()) {
@@ -540,16 +577,16 @@ public class CommandTabTracker implements EveryFrameScript {
                 turnedMusicOnce = false;
             }
         }
-        if (!hasComponentPresent((UIComponentAPI) panelMap.get(currentTab)) && currentTab != null) {
+        if (!hasComponentPresent((UIComponentAPI) panel(currentTab)) && currentTab != null) {
             removePanels((ArrayList<UIComponentAPI>) ReflectionUtilis.getChildrenCopy(mainParent), mainParent, null);
             if (currentTab.getText().toLowerCase().contains("doctrine & blueprints")) {
-                UIComponentAPI comp = (UIComponentAPI) panelMap.get(currentTab);
+                UIComponentAPI comp = (UIComponentAPI) panel(currentTab);
                 ReflectionUtilis.invokeMethodWithAutoProjection("createIfNeeded", comp);
                 ReflectionUtilis.invokeMethodWithAutoProjection("restoreTableUIState", comp);
                 Fader fader = (Fader) ReflectionUtilis.invokeMethodWithAutoProjection("getFader", comp);
                 fader.forceIn();
             }
-            mainParent.addComponent((UIComponentAPI) panelMap.get(currentTab));
+            mainParent.addComponent((UIComponentAPI) panel(currentTab));
             CommandTabMemoryManager.getInstance().setLastCheckedTab(currentTab.getText().toLowerCase());
 
         }
@@ -626,15 +663,16 @@ public class CommandTabTracker implements EveryFrameScript {
                     currentTab = buttonAPI;
                 }
                 if (!currentTab.equals(buttonAPI)) {
+                    panel(buttonAPI);
                     Global.getSector().getListenerManager().getListeners(CommandTabListener.class).stream().sorted(new Comparator<CommandTabListener>() {
                         @Override
                         public int compare(CommandTabListener o1, CommandTabListener o2) {
                             return Integer.compare(o1.getOrder(), o2.getOrder());
                         }
                     }).toList().forEach(x -> x.performRefresh(buttonAPI));
-                    ProductionUtil.getCurrentTab().removeComponent((UIComponentAPI) panelMap.get(currentTab));
+                    ProductionUtil.getCurrentTab().removeComponent((UIComponentAPI) panel(currentTab));
 
-                    Object obj = panelMap.get(buttonAPI);
+                    Object obj = panel(buttonAPI);
                     if (obj instanceof CustomPanelAPI panelAPI) {
                         if (panelAPI.getPlugin() instanceof CommandUIPlugin plugin) {
                             if (plugin.doesPlayCustomSoundWhenEnteredEntireTab()) {
