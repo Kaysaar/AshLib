@@ -192,8 +192,18 @@ public final class CampaignScreenHost {
                     || show.parameterType(1) != observedBase) {
                 return "HOST_CONTRACT_UNAVAILABLE_SAFE_FALLBACK";
             }
-            float width = Math.min(1440f, target.getPosition().getWidth() - 40f);
-            float height = Math.min(920f, target.getPosition().getHeight() - 110f);
+            Object nativeBar = CampaignUiAccess.read(target, "getButtons");
+            if (!(nativeBar instanceof UIPanelAPI)) {
+                return "HOST_BAR_GEOMETRY_UNAVAILABLE";
+            }
+            float barHeight = ((UIPanelAPI) nativeBar).getPosition().getHeight();
+            if (!(barHeight > 0f)) {
+                return "HOST_BAR_GEOMETRY_UNAVAILABLE";
+            }
+            // RC8 adds a one-pixel wrapper border and a two-pixel top inset.
+            // Fill the remaining Core area so native centering leaves no extra margin.
+            float width = target.getPosition().getWidth() - 2f;
+            float height = target.getPosition().getHeight() - barHeight - 4f;
             if (width < 320 || height < 200) {
                 return "HOST_TOO_SMALL";
             }

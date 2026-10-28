@@ -88,6 +88,8 @@ final class CampaignBarReparent {
 
     void verifyAt(UIPanelAPI parent, float first) throws Exception {
         List<?> list = CampaignUiAccess.children(parent);
+        int buttonWidth = parent == bar ? 119 : CampaignViewportModel.WIDTH;
+        int stride = buttonWidth + CampaignViewportModel.GAP;
         for (int i = 0; i < buttons.size(); i++) {
             ButtonAPI b = buttons.get(i);
             PositionAPI position = b.getPosition();
@@ -102,9 +104,9 @@ final class CampaignBarReparent {
                             && !position.isSuspendRecompute(),
                     "ANCHOR_" + i);
             need(
-                    near(position.getWidth(), 119)
+                    near(position.getWidth(), buttonWidth)
                             && near(position.getHeight(), 21)
-                            && near(position.getX(), parent.getPosition().getX() + first + i * 125)
+                            && near(position.getX(), parent.getPosition().getX() + first + i * stride)
                             && near(position.getY(), parent.getPosition().getY() + 4),
                     "GEOMETRY_" + i);
             need(
@@ -131,6 +133,7 @@ final class CampaignBarReparent {
         for (ButtonAPI b : buttons) {
             bar.removeComponent(b);
             destination.addComponent(b).inBL(0, 4);
+            b.getPosition().setSize(CampaignViewportModel.WIDTH, 21);
             checkpoint.run();
         }
         chain(0);
@@ -169,6 +172,7 @@ final class CampaignBarReparent {
             if (parent != null) {
                 ((UIPanelAPI) parent).removeComponent(b);
             }
+            b.getPosition().setSize(119, 21);
         }
         // Restore original child order; appended tabs can differ from visual anchor order.
         for (Object child : children) {

@@ -13,7 +13,7 @@ import java.awt.Color;
 final class CampaignArrowIcons extends BaseCustomUIPanelPlugin {
     static final String LEFT = "graphics/ashlib/campaignbar/arrow-left-white.png";
     static final String RIGHT = "graphics/ashlib/campaignbar/arrow-right-white.png";
-    static final float WIDTH = 11, HEIGHT = 15, DISABLED_ALPHA = 0.30f;
+    static final float WIDTH = 8, HEIGHT = 11, DISABLED_ALPHA = 0.30f;
 
     interface Glyph {
         void render(float x, float y, float opacity);

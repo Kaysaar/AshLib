@@ -17,6 +17,8 @@ import com.fs.starfarer.api.ui.UIComponentAPI;
 import com.fs.starfarer.api.ui.UIPanelAPI;
 
 import org.lwjgl.input.Mouse;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -34,9 +36,10 @@ import java.util.Set;
 final class CampaignNavigableBar implements CampaignViewportBridge.Hooks {
     static final int WIDTH = 914;
     static final int BAR_WIDTH = 909;
-    static final int ARROW_WIDTH = 67;
-    static final int VIEW_X = 86;
-    static final int RIGHT_X = 836;
+    static final int ARROW_WIDTH = 44, ARROW_HEIGHT = 17;
+    static final int VIEW_X = 13;
+    // Logical offsets inside TRIPAD's native decoration, which follows Core tab layering.
+    static final int LEFT_X = 116, RIGHT_X = 164, ARROW_Y = 3;
 
     interface Factory {
         Assets create(UIPanelAPI bar, Class<?> button, Runnable left, Runnable right)
@@ -105,7 +108,7 @@ final class CampaignNavigableBar implements CampaignViewportBridge.Hooks {
                                 width != null && add != null && add.getParameterTypes().length == 4,
                                 "NO_ARROW_FACTORY");
 
-                        width.write(scratch, 67f);
+                        width.write(scratch, (float) ARROW_WIDTH);
                         Object l = CampaignRuntimeBridge.actionListener(
                                 add.getParameterTypes()[3], left);
                         Object r = CampaignRuntimeBridge.actionListener(
@@ -117,8 +120,10 @@ final class CampaignNavigableBar implements CampaignViewportBridge.Hooks {
                                 (Map<?, ?>) CampaignUiAccess.read(scratch, "getButtons");
                         ButtonAPI lb = (ButtonAPI) registry.get("ashlib.poc.arrow.left");
                         ButtonAPI rb = (ButtonAPI) registry.get("ashlib.poc.arrow.right");
-                        lb.getPosition().inBL(0, 4);
-                        rb.getPosition().inBL(0, 4);
+                        lb.getPosition().setSize(ARROW_WIDTH, ARROW_HEIGHT);
+                        rb.getPosition().setSize(ARROW_WIDTH, ARROW_HEIGHT);
+                        lb.getPosition().inBL(0, ARROW_Y);
+                        rb.getPosition().inBL(0, ARROW_Y);
                         scratch.removeComponent(lb);
                         scratch.removeComponent(rb);
                         need(
@@ -130,7 +135,7 @@ final class CampaignNavigableBar implements CampaignViewportBridge.Hooks {
                                 "ARROW_HAS_SHORTCUT");
 
                         CustomPanelAPI sample = Global.getSettings().createCustom(800, 40, null);
-                        TooltipMakerAPI tip = sample.createUIElement(744, 35, true);
+                        TooltipMakerAPI tip = sample.createUIElement(CampaignViewportModel.VIEW_WIDTH, 35, true);
                         sample.addUIElement(tip);
                         ScrollPanelAPI scroller = tip.getExternalScroller();
                         need(scroller != null, "NO_NATIVE_SCROLLER");
@@ -152,6 +157,8 @@ final class CampaignNavigableBar implements CampaignViewportBridge.Hooks {
     final CampaignViewportModel model;
     private final UIPanelAPI core;
     private final UIPanelAPI bar;
+    private final UIPanelAPI arrowOwner;
+    private final List<?> arrowOwnerChildren;
     private final List<?> coreChildren;
     private final Map<Object, Object> forward;
     private final Map<Object, Object> reverse;
@@ -177,6 +184,7 @@ final class CampaignNavigableBar implements CampaignViewportBridge.Hooks {
     private final MethodRef arrowActive;
     private final MethodRef arrowSetActive;
     private final List<InputEventAPI> insideEvents = new ArrayList<InputEventAPI>();
+    private final List<InputEventAPI> arrowEvents = new ArrayList<InputEventAPI>();
 
     private int pending = -1;
     private int lastX = -100000;
@@ -256,6 +264,8 @@ final class CampaignNavigableBar implements CampaignViewportBridge.Hooks {
         this.model = new CampaignViewportModel(buttons.size());
         this.core = core;
         this.bar = bar;
+        arrowOwner = findTripadDecoration(core, bar);
+        arrowOwnerChildren = CampaignUiAccess.children(arrowOwner);
         this.forward = forward;
         this.reverse = reverse;
         this.accumulator = accumulator;
@@ -335,7 +345,7 @@ final class CampaignNavigableBar implements CampaignViewportBridge.Hooks {
                 viewport =
                         (ScrollPanelAPI)
                                 assets.contract.viewportConstructor.invokeWithArguments(this);
-                viewport.getPosition().setSize(744, 35);
+                viewport.getPosition().setSize(CampaignViewportModel.VIEW_WIDTH, 35);
                 call(
                         viewport,
                         "setContentSize",
@@ -382,14 +392,14 @@ final class CampaignNavigableBar implements CampaignViewportBridge.Hooks {
                             && CampaignUiAccess.read(assets.right, "getShortcut") == null,
                     "ARROW_SHORTCUT");
             need(
-                    near(assets.left.getPosition().getWidth(), 67)
-                            && near(assets.right.getPosition().getWidth(), 67),
+                    near(assets.left.getPosition().getWidth(), ARROW_WIDTH)
+                            && near(assets.right.getPosition().getWidth(), ARROW_WIDTH),
                     "ARROW_SIZE");
 
             verifyRegistry();
             movement.verifyOriginal();
             sink.event(
-                    "NAV_PREFLIGHT_OK restoreProfile=BASELINE_PARENTS_ANCHORS_REGISTRIES width=914 viewport=744 arrows=67 noNewShortcuts=true");
+                    "NAV_PREFLIGHT_OK restoreProfile=BASELINE_PARENTS_ANCHORS_REGISTRIES width=914 viewport=890 arrows=44x17 location=TRIPAD noNewShortcuts=true");
         } catch (Throwable error) {
             assets.icons.dispose();
             frame.dispose();
@@ -414,11 +424,12 @@ final class CampaignNavigableBar implements CampaignViewportBridge.Hooks {
                         }
                     });
 
-            bar.addComponent(assets.left).inBL(13, 4);
+            arrowOwner.addComponent(assets.left).inBL(LEFT_X, ARROW_Y);
             checkpoint.reached("LEFT");
-            bar.addComponent(assets.right).inBL(RIGHT_X, 4);
+            arrowOwner.addComponent(assets.right).inBL(RIGHT_X, ARROW_Y);
             checkpoint.reached("RIGHT");
-            bar.addComponent(assets.icons.panel).inBL(0, 0);
+            assets.icons.panel.getPosition().setSize(RIGHT_X - LEFT_X + ARROW_WIDTH, ARROW_HEIGHT);
+            arrowOwner.addComponent(assets.icons.panel).inBL(LEFT_X, ARROW_Y);
             checkpoint.reached("ICONS");
 
             accumulator.write(bar, (float) BAR_WIDTH);
@@ -604,44 +615,24 @@ final class CampaignNavigableBar implements CampaignViewportBridge.Hooks {
                         && near(((Number) accumulator.read(bar)).floatValue(), 909),
                 "BAR_DIMENSIONS_CHANGED");
         need(
-                near(viewport.getPosition().getX(), bar.getPosition().getX() + 86)
+                near(viewport.getPosition().getX(), bar.getPosition().getX() + VIEW_X)
                         && near(viewport.getPosition().getY(), bar.getPosition().getY()),
                 "VIEWPORT_POSITION");
         need(
                 near(baselineFrame.getOpacity(), 0) && near(frame.panel.getOpacity(), 1),
                 "FRAME_OPACITY_CHANGED");
         List<?> now = CampaignUiAccess.inspectChildren(bar);
-        need(
-                now.size() == 7
-                        && now.contains(frame.panel)
-                        && now.contains(viewport)
-                        && now.contains(assets.left)
-                        && now.contains(assets.right)
-                        && now.get(6) == assets.icons.panel,
+        need(now.size() == 4 && now.contains(frame.panel) && now.contains(viewport),
                 "BAR_CHILDREN_CHANGED");
-        need(
-                CampaignUiAccess.read(assets.icons.panel, "getParent") == bar
-                        && near(assets.icons.panel.getPosition().getX(), bar.getPosition().getX())
-                        && near(assets.icons.panel.getPosition().getY(), bar.getPosition().getY()),
-                "ICON_PARENT_OR_POSITION_CHANGED");
-        need(
-                CampaignUiAccess.read(viewport, "getParent") == bar
-                        && CampaignUiAccess.read(frame.panel, "getParent") == bar
-                        && CampaignUiAccess.read(assets.left, "getParent") == bar
-                        && CampaignUiAccess.read(assets.right, "getParent") == bar,
+        need(CampaignUiAccess.read(viewport, "getParent") == bar
+                        && CampaignUiAccess.read(frame.panel, "getParent") == bar,
                 "OWNED_PARENT_CHANGED");
-        need(
-                near(viewport.getPosition().getWidth(), 744)
+        need(near(viewport.getPosition().getWidth(), CampaignViewportModel.VIEW_WIDTH)
                         && near(viewport.getPosition().getHeight(), 35)
                         && near(frame.panel.getPosition().getWidth(), 914)
                         && near(frame.panel.getPosition().getHeight(), 35),
                 "OWNED_SIZE_CHANGED");
-        need(
-                near(assets.left.getPosition().getX(), bar.getPosition().getX() + 13)
-                        && near(assets.right.getPosition().getX(), bar.getPosition().getX() + 836)
-                        && near(assets.left.getPosition().getY(), bar.getPosition().getY() + 4)
-                        && near(assets.right.getPosition().getY(), bar.getPosition().getY() + 4),
-                "ARROW_GEOMETRY_CHANGED");
+        verifyArrowOwner(retired);
         List<?> tracks =
                 CampaignUiAccess.inspectChildren(
                         CampaignUiAccess.read(viewport, "getContentContainer"));
@@ -663,6 +654,13 @@ final class CampaignNavigableBar implements CampaignViewportBridge.Hooks {
 
     void abandon() {
         active = false;
+        try {
+            // A retired bar may share the surviving TRIPAD decoration with its replacement.
+            // Remove only this session's controls even when foreign changes prevent full restore.
+            removeArrowComponents();
+        } catch (Exception error) {
+            sink.failure("TRIPAD_RETIRE_CLEANUP_FAILED", error);
+        }
         session = null;
         pending = -1;
         insideEvents.clear();
@@ -692,12 +690,11 @@ final class CampaignNavigableBar implements CampaignViewportBridge.Hooks {
         for (ButtonAPI arrow : Arrays.asList(assets.left, assets.right)) {
             cancel(arrow);
         }
-        for (UIComponentAPI owned :
-                Arrays.asList(
-                        assets.icons.panel, assets.left, assets.right, viewport, frame.panel)) {
-            if (CampaignUiAccess.children(bar).contains(owned)) {
-                bar.removeComponent(owned);
-            }
+        removeArrowComponents();
+        need(arrowOwnerChildren.equals(CampaignUiAccess.children(arrowOwner)),
+                "TRIPAD_RESTORE_CHILDREN_CHANGED");
+        for (UIComponentAPI owned : Arrays.asList(viewport, frame.panel)) {
+            if (CampaignUiAccess.children(bar).contains(owned)) bar.removeComponent(owned);
         }
         movement.restore();
         for (CampaignBarHotkey hotkey : hotkeys.values()) {
@@ -724,6 +721,77 @@ final class CampaignNavigableBar implements CampaignViewportBridge.Hooks {
                         + " parentsAnchorsRegistries=true selectedStateUntouched=true");
     }
 
+    private static UIPanelAPI findTripadDecoration(UIPanelAPI core, UIPanelAPI bar) throws Exception {
+        final String asset = "graphics/ui/tripad_bot_left_decor_extended.png";
+        UIPanelAPI found = null;
+        for (Object value : CampaignUiAccess.inspectChildren(core)) {
+            if (!(value instanceof UIPanelAPI) || value == bar) continue;
+            UIPanelAPI panel = (UIPanelAPI) value;
+            PositionAPI p = panel.getPosition();
+            if (CampaignUiAccess.read(p, "getBase") != bar.getPosition()
+                    || CampaignUiAccess.read(p, "getParent") != core.getPosition()) continue;
+            boolean matches = false;
+            for (Object child : CampaignUiAccess.inspectChildren(panel)) {
+                Object sprite = CampaignUiAccess.read(child, "getSprite");
+                Object texture = CampaignUiAccess.read(sprite, "getTexture");
+                JSONArray fields = CampaignFrameDiagnostics.textureStrings(texture);
+                for (int i = 0; i < fields.length(); i++) {
+                    JSONObject field = fields.getJSONObject(i);
+                    if (asset.equals(field.optString("value", ""))) matches = true;
+                }
+            }
+            if (!matches) continue;
+            need(found == null, "AMBIGUOUS_TRIPAD_DECORATION");
+            need(p.getWidth() >= RIGHT_X + ARROW_WIDTH && p.getHeight() >= ARROW_Y + ARROW_HEIGHT
+                            && !Boolean.TRUE.equals(CampaignUiAccess.read(panel, "isClipping"))
+                            && CampaignUiAccess.inspectChildren(panel).size() == 1,
+                    "UNSUPPORTED_TRIPAD_DECORATION");
+            need(CampaignUiAccess.method(panel.getClass(), "addComponent", UIComponentAPI.class)
+                            .getDeclaringClass()
+                            == CampaignUiAccess.method(bar.getClass(), "addComponent", UIComponentAPI.class)
+                            .getDeclaringClass(), "FOREIGN_TRIPAD_PARENT_IMPLEMENTATION");
+            found = panel;
+        }
+        need(found != null, "TRIPAD_DECORATION_UNAVAILABLE");
+        return found;
+    }
+
+    private void verifyArrowOwner(boolean retired) throws Exception {
+        need(retired || (CampaignUiAccess.read(arrowOwner, "getParent") == core
+                        && CampaignUiAccess.inspectChildren(core).contains(arrowOwner)),
+                "TRIPAD_DETACHED_FROM_CORE");
+        List<?> children = CampaignUiAccess.inspectChildren(arrowOwner);
+        int base = arrowOwnerChildren.size();
+        need(children.size() == base + 3 && children.subList(0, base).equals(arrowOwnerChildren)
+                        && children.get(base) == assets.left && children.get(base + 1) == assets.right
+                        && children.get(base + 2) == assets.icons.panel,
+                "TRIPAD_CHILDREN_CHANGED");
+        need(CampaignUiAccess.read(assets.left, "getParent") == arrowOwner
+                        && CampaignUiAccess.read(assets.right, "getParent") == arrowOwner
+                        && CampaignUiAccess.read(assets.icons.panel, "getParent") == arrowOwner,
+                "ARROW_PARENT_CHANGED");
+        PositionAPI p = arrowOwner.getPosition();
+        need(near(assets.left.getPosition().getX(), p.getX() + LEFT_X)
+                        && near(assets.right.getPosition().getX(), p.getX() + RIGHT_X)
+                        && near(assets.left.getPosition().getY(), p.getY() + ARROW_Y)
+                        && near(assets.right.getPosition().getY(), p.getY() + ARROW_Y)
+                        && near(assets.left.getPosition().getWidth(), ARROW_WIDTH)
+                        && near(assets.right.getPosition().getWidth(), ARROW_WIDTH)
+                        && near(assets.left.getPosition().getHeight(), ARROW_HEIGHT)
+                        && near(assets.right.getPosition().getHeight(), ARROW_HEIGHT)
+                        && near(assets.icons.panel.getPosition().getX(), p.getX() + LEFT_X)
+                        && near(assets.icons.panel.getPosition().getY(), p.getY() + ARROW_Y)
+                        && near(assets.icons.panel.getPosition().getWidth(), RIGHT_X - LEFT_X + ARROW_WIDTH)
+                        && near(assets.icons.panel.getPosition().getHeight(), ARROW_HEIGHT),
+                "ARROW_GEOMETRY_CHANGED");
+    }
+
+    private void removeArrowComponents() throws Exception {
+        for (UIComponentAPI owned : Arrays.asList(assets.icons.panel, assets.left, assets.right)) {
+            if (CampaignUiAccess.read(owned, "getParent") == arrowOwner) arrowOwner.removeComponent(owned);
+        }
+    }
+
     private void cancelButtons() throws Exception {
         for (ButtonAPI b : movement.buttons) {
             cancel(b);
@@ -741,8 +809,8 @@ final class CampaignNavigableBar implements CampaignViewportBridge.Hooks {
                 + " visible="
                 + model.index()
                 + ".."
-                + (model.index() + 5)
-                + " frame=914 viewportX=86 viewportWidth=744 offset="
+                + (model.index() + CampaignViewportModel.VISIBLE - 1)
+                + " frame=914 viewportX=13 viewportWidth=890 arrows=TRIPAD offset="
                 + viewport.getXOffset()
                 + " leftEnabled="
                 + assets.left.isEnabled()
@@ -756,6 +824,24 @@ final class CampaignNavigableBar implements CampaignViewportBridge.Hooks {
             return;
         }
         try {
+            // The campaign resource HUD consumes mouse events across the TRIPAD strip.
+            // This viewport is dispatched before that HUD, so let the existing decoration
+            // process its own arrows first. Keep the original events: native consumption
+            // prevents a second activation when Core later dispatches the decoration.
+            // The decoration also retains its native visibility/fade and modal gates.
+            updateArrows();
+            arrowEvents.clear();
+            for (Object value : events) {
+                InputEventAPI e = (InputEventAPI) value;
+                if (!e.isConsumed() && e.isMouseEvent()) {
+                    arrowEvents.add(e);
+                }
+            }
+            if (!arrowEvents.isEmpty()) {
+                // Include moves and releases outside the arrows for native hover/capture
+                // cancellation. Native hit-testing leaves unrelated events untouched.
+                arrowOwner.processInput(arrowEvents);
+            }
             for (Object value : events) {
                 InputEventAPI e = (InputEventAPI) value;
                 if (e.isConsumed() || !e.isMouseEvent()) {
@@ -785,6 +871,8 @@ final class CampaignNavigableBar implements CampaignViewportBridge.Hooks {
             }
         } catch (Throwable error) {
             failure(error);
+        } finally {
+            arrowEvents.clear();
         }
     }
 

@@ -62,43 +62,9 @@ final class CampaignFrameSlices {
         slices = Collections.unmodifiableList(result);
     }
 
-    /** Fixed 914px frame with six tab slots and two arrow slots. */
+    /** The original seven native bays; paging controls live beside TRIPAD. */
     static CampaignFrameSlices navigable() {
-        // Slot widths in UI units; gaps and end caps are added separately.
-        return new CampaignFrameSlices(
-                new int[] {
-                    67, /* Left arrow. */
-                    119, 119, 119, 119, 119, 119, /* Six visible tabs. */
-                    67 /* Right arrow. */
-                });
-    }
-
-    private CampaignFrameSlices(int[] bays) {
-        count = 8;
-        buttonWidth = 119;
-        gap = 6;
-        List<Slice> result = new ArrayList<Slice>();
-        int x = FIRST;
-        result.add(new Slice(0, 0, FIRST));
-        for (int i = 0; i < 8; i++) {
-            int source = FIRST + (i <= 3 ? i : i - 1) * (SLOT + GAP),
-                    left = bays[i] / 2,
-                    right = bays[i] - left;
-            result.add(new Slice(source, x, left));
-            x += left;
-            result.add(new Slice(source + SLOT - right, x, right));
-            x += right;
-            if (i < 7) {
-                result.add(new Slice(source + SLOT, x, GAP));
-                x += GAP;
-            }
-        }
-        result.add(new Slice(SOURCE_WIDTH - RIGHT_CAP, x, RIGHT_CAP));
-        x += RIGHT_CAP;
-        if (x != 914) {
-            throw new IllegalStateException("NAV_FRAME_WIDTH");
-        }
-        width = x;
-        slices = Collections.unmodifiableList(result);
+        return new CampaignFrameSlices(CampaignViewportModel.VISIBLE, CampaignViewportModel.WIDTH,
+                CampaignViewportModel.GAP);
     }
 }

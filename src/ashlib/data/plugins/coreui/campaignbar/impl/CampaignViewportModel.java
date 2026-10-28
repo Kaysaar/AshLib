@@ -2,7 +2,7 @@ package ashlib.data.plugins.coreui.campaignbar.impl;
 
 /** Pure window geometry; no UI objects or campaign state. */
 public final class CampaignViewportModel {
-    public static final int COUNT = 8, VISIBLE = 6, WIDTH = 119, GAP = 6, HEIGHT = 35;
+    public static final int COUNT = 8, VISIBLE = 7, WIDTH = 122, GAP = 6, HEIGHT = 35;
     public static final int STRIDE = WIDTH + GAP,
             VIEW_WIDTH = VISIBLE * STRIDE - GAP,
             TRACK_WIDTH = COUNT * STRIDE - GAP;
