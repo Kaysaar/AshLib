@@ -1,5 +1,7 @@
 package ashlib.data.plugins.ui.models.resizable;
 
+import java.awt.Color;
+
 public class PartialImageViewer extends ImageViewer {
 
     protected float sourceWidth;
@@ -29,6 +31,10 @@ public class PartialImageViewer extends ImageViewer {
             float width,
             float height
     ) {
+        if (sourceWidth <= 0f || sourceHeight <= 0f) {
+            setRegionNormalized(0f, 0f, 0f, 0f);
+            return;
+        }
         regionX = x / sourceWidth;
         regionY = y / sourceHeight;
         regionWidth = width / sourceWidth;
@@ -49,20 +55,52 @@ public class PartialImageViewer extends ImageViewer {
 
     @Override
     public void render(float alphaMult) {
-        prepareSprite(alphaMult);
+        if (spriteOfImage == null) return;
 
-        spriteOfImage.setSize(
-                sourceWidth,
-                sourceHeight
-        );
+        float x = Math.max(0f, Math.min(1f, regionX));
+        float y = Math.max(0f, Math.min(1f, regionY));
+        float width = Math.max(0f, Math.min(1f - x, regionWidth));
+        float height = Math.max(0f, Math.min(1f - y, regionHeight));
+        float displayWidth = componentPanel.getPosition().getWidth();
+        float displayHeight = componentPanel.getPosition().getHeight();
+        if (width <= 0f || height <= 0f || displayWidth <= 0f || displayHeight <= 0f) return;
 
-        spriteOfImage.renderRegionAtCenter(
-                componentPanel.getPosition().getCenterX(),
-                componentPanel.getPosition().getCenterY(),
-                regionX,
-                regionY,
-                regionWidth,
-                regionHeight
-        );
+        float oldTexX = spriteOfImage.getTexX();
+        float oldTexY = spriteOfImage.getTexY();
+        float oldTexWidth = spriteOfImage.getTexWidth();
+        float oldTexHeight = spriteOfImage.getTexHeight();
+        float oldWidth = spriteOfImage.getWidth();
+        float oldHeight = spriteOfImage.getHeight();
+        float oldCenterX = spriteOfImage.getCenterX();
+        float oldCenterY = spriteOfImage.getCenterY();
+        float oldAngle = spriteOfImage.getAngle();
+        float oldAlpha = spriteOfImage.getAlphaMult();
+        Color oldColor = spriteOfImage.getColor();
+
+        try {
+            spriteOfImage.setTexX(oldTexX + oldTexWidth * x);
+            spriteOfImage.setTexY(oldTexY + oldTexHeight * (1f - y - height));
+            spriteOfImage.setTexWidth(oldTexWidth * width);
+            spriteOfImage.setTexHeight(oldTexHeight * height);
+            spriteOfImage.setSize(displayWidth, displayHeight);
+            spriteOfImage.setCenter(displayWidth / 2f, displayHeight / 2f);
+            spriteOfImage.setAngle(0f);
+            spriteOfImage.setColor(colorOverlay == null ? Color.WHITE : colorOverlay);
+            spriteOfImage.setAlphaMult(alphaMult * this.alphaMult);
+            spriteOfImage.renderAtCenter(
+                    componentPanel.getPosition().getCenterX(),
+                    componentPanel.getPosition().getCenterY()
+            );
+        } finally {
+            spriteOfImage.setTexX(oldTexX);
+            spriteOfImage.setTexY(oldTexY);
+            spriteOfImage.setTexWidth(oldTexWidth);
+            spriteOfImage.setTexHeight(oldTexHeight);
+            spriteOfImage.setSize(oldWidth, oldHeight);
+            spriteOfImage.setCenter(oldCenterX, oldCenterY);
+            spriteOfImage.setAngle(oldAngle);
+            spriteOfImage.setColor(oldColor);
+            spriteOfImage.setAlphaMult(oldAlpha);
+        }
     }
 }

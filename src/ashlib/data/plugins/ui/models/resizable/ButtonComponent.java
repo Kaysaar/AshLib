@@ -28,8 +28,10 @@ public class ButtonComponent extends ResizableComponent {
     public void setClickable(boolean clickable) {
         isClickable = clickable;
     }
+
     boolean enableRightClick = false;
     boolean decreasedMode = true;
+
     public void setOverrideHighlight(boolean overrideHighlight) {
         this.overrideHighlight = overrideHighlight;
     }
@@ -49,9 +51,11 @@ public class ButtonComponent extends ResizableComponent {
     IntervalUtil breakBetweenButtons = null;
     boolean overrideHighlight = false;
     LabelComponent component;
-    public void setColorOfBorder(Color color){
+
+    public void setColorOfBorder(Color color) {
         this.renderer.setBoxColor(color);
     }
+
     public ButtonComponent(float width, float height) {
         currHighlight = 0f;
         originalWidth = width;
@@ -74,10 +78,11 @@ public class ButtonComponent extends ResizableComponent {
 
     }
 
+    public boolean doesHover = false;
 
     public boolean shouldHighlight() {
 
-        return doesHover() && (isClickable||overrideHighlight);
+        return doesHover && (isClickable || overrideHighlight);
     }
 
     public CustomPanelAPI getPanelOfButton() {
@@ -88,7 +93,8 @@ public class ButtonComponent extends ResizableComponent {
     public void positionChanged(PositionAPI position) {
 
     }
-public boolean shouldRenderBorders = true;
+
+    public boolean shouldRenderBorders = true;
 
     public void setShouldRenderBorders(boolean shouldRenderBorders) {
         this.shouldRenderBorders = shouldRenderBorders;
@@ -109,11 +115,11 @@ public boolean shouldRenderBorders = true;
         spriteToRender.setColor(highlightColor);
         spriteToRender.setAlphaMult(alphaMult * currHighlight);
         spriteToRender.setSize(componentPanel.getPosition().getWidth(), componentPanel.getPosition().getHeight());
-        if(currHighlight!=0){
+        if (currHighlight != 0) {
             spriteToRender.renderAtCenter(componentPanel.getPosition().getCenterX(), componentPanel.getPosition().getCenterY());
 
         }
-        if(shouldRenderBorders){
+        if (shouldRenderBorders) {
             renderer.render(alphaMult);
             renderer.render(alphaMult);
             renderer.render(alphaMult);
@@ -124,20 +130,20 @@ public boolean shouldRenderBorders = true;
 
     @Override
     public void advance(float amount) {
-            float scale = this.scale;
-            if (shouldHighlight()) {
-                currHighlight += 0.02f;
-                if (currHighlight >= maxHighlight) {
-                    currHighlight = maxHighlight;
-                }
-
-            } else {
-                currHighlight -= 0.02f;
-                if (currHighlight <= 0) {
-                    currHighlight = 0f;
-                }
+        float scale = this.scale;
+        if (shouldHighlight()) {
+            currHighlight += 0.02f;
+            if (currHighlight >= maxHighlight) {
+                currHighlight = maxHighlight;
             }
-        if(!blockButtonInstance){
+
+        } else {
+            currHighlight -= 0.02f;
+            if (currHighlight <= 0) {
+                currHighlight = 0f;
+            }
+        }
+        if (!blockButtonInstance) {
             if (breakBetweenButtons != null) {
                 breakBetweenButtons.advance(amount);
                 if (breakBetweenButtons.intervalElapsed()) {
@@ -147,9 +153,9 @@ public boolean shouldRenderBorders = true;
         }
 
 
-
     }
-public  boolean blockButtonInstance = false;
+
+    public boolean blockButtonInstance = false;
 
     public boolean isBreakBetweenClicks() {
         return breakBetweenButtons != null;
@@ -161,24 +167,34 @@ public  boolean blockButtonInstance = false;
 
     @Override
     public void processInput(List<InputEventAPI> events) {
-        if(!blockButtonInstance){
+        if (!blockButtonInstance) {
             for (InputEventAPI event : events) {
                 if (event.isConsumed()) continue;
+                if(event.isMouseMoveEvent()){
+                    if(componentPanel.getPosition().containsEvent(event)){
+                        event.consume();
+                        doesHover = true;
+                        continue;
+                    }
+                    else{
+                        doesHover = false;
+                    }
+                }
                 if (event.isLMBDownEvent()) {
-                    if (doesHover() && !isBreakBetweenClicks()&&isClickable) {
+                    if (doesHover() && !isBreakBetweenClicks() && isClickable) {
                         Global.getSoundPlayer().playUISound("ui_button_pressed", 1, 1);
                         initBreak();
                         performActionOnClick(false);
-                        performActionOnClickWithEvent(false,event);
+                        performActionOnClickWithEvent(false, event);
                         event.consume();
                     }
                 }
                 if (event.isRMBDownEvent()) {
-                    if (doesHover() && !isBreakBetweenClicks()&&isClickable&&enableRightClick) {
+                    if (doesHover() && !isBreakBetweenClicks() && isClickable && enableRightClick) {
                         Global.getSoundPlayer().playUISound("ui_button_pressed", 1, 1);
                         initBreak();
                         performActionOnClick(true);
-                        performActionOnClickWithEvent(true,event);
+                        performActionOnClickWithEvent(true, event);
                         event.consume();
                     }
                 }
@@ -190,9 +206,11 @@ public  boolean blockButtonInstance = false;
     public void performActionOnClick(boolean isRightClick) {
 
     }
-    public void performActionOnClickWithEvent(boolean isRightClick,InputEventAPI eventAPI) {
+
+    public void performActionOnClickWithEvent(boolean isRightClick, InputEventAPI eventAPI) {
 
     }
+
     @Override
     public void buttonPressed(Object buttonId) {
 
