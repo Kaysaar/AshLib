@@ -17,6 +17,8 @@ public class ShipRenderInfo {
     static String format= ".ship";
     static String filepath2 = "data/hulls/skins/";
     static String format2= ".skin";
+    private static final Map<String, JSONObject> shipJsonCache = new HashMap<>();
+    private static final Map<String, JSONObject> mergedJsonCache = new HashMap<>();
     public class Slot{
         public Vector2f locationOnShip;
         public String id;
@@ -82,12 +84,16 @@ public class ShipRenderInfo {
     }
 
     private static JSONObject getShipJson(String hullID) throws IOException, JSONException {
+        JSONObject cached = shipJsonCache.get(hullID);
+        if (cached != null) {
+            return cached;
+        }
         JSONObject obj;
         try {
             String Filepath = Global.getSettings().getHullSpec(hullID).getShipFilePath();
             Filepath = AshMisc.cleanPath(Filepath);
             Filepath =Filepath.replace("\\", "/");
-            obj = Global.getSettings().loadJSON(Filepath);
+            obj = loadMergedJson(Filepath);
             if(obj.has("width")){
                 obj.getDouble("width");
             }
@@ -102,16 +108,27 @@ public class ShipRenderInfo {
             String Filepath = Global.getSettings().getHullSpec(hullID).getShipFilePath();
             Filepath = AshMisc.cleanPath(Filepath);
             Filepath =Filepath.replace("\\", "/");
-            JSONObject obj2 =  Global.getSettings().loadJSON(Filepath);
+            JSONObject obj2 = loadMergedJson(Filepath);
             String hullIdProper = obj2.getString("baseHullId");
             Filepath = Global.getSettings().getHullSpec(hullIdProper).getShipFilePath();
             Filepath = AshMisc.cleanPath(Filepath);
             Filepath =Filepath.replace("\\", "/");
-            obj = Global.getSettings().loadJSON(Filepath);
+            obj = loadMergedJson(Filepath);
 
 
         }
+        shipJsonCache.put(hullID, obj);
         return obj;
+    }
+
+    private static JSONObject loadMergedJson(String filepath) throws IOException, JSONException {
+        JSONObject cached = mergedJsonCache.get(filepath);
+        if (cached != null) {
+            return cached;
+        }
+        JSONObject loaded = Global.getSettings().loadJSON(filepath);
+        mergedJsonCache.put(filepath, loaded);
+        return loaded;
     }
 
     public double  width;
@@ -125,7 +142,7 @@ public class ShipRenderInfo {
     public ArrayList<Slot>built_in_slots;
    public void getModuleSlotsFromVariantFile(String filepath) throws JSONException, IOException {
         String betterFilePath =  filepath.replace("\\", "/");
-       JSONObject object = Global.getSettings().loadJSON(betterFilePath);
+       JSONObject object = loadMergedJson(betterFilePath);
 
        // Create a HashMap to store the module slots
        HashMap<String, String> moduleSlots = new HashMap<String, String>();
@@ -178,7 +195,7 @@ public class ShipRenderInfo {
            String filepath  = Global.getSettings().getVariant(entry.getValue()).getVariantFilePath();
            filepath = AshMisc.cleanPath(filepath);
            filepath = filepath.replace("\\", "/");
-           JSONObject obj = Global.getSettings().loadJSON(filepath);
+           JSONObject obj = loadMergedJson(filepath);
            String shipHullId = obj.getString("hullId");
            moduleSlotsShipHulls.put(entry.getKey(),shipHullId);
 
