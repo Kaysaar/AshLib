@@ -19,16 +19,26 @@ public class ShipRenderInfo {
     static String format2= ".skin";
 
     private static HashMap<String, Object> jsonMemo;
+    private static HashMap<String, Object> shipJsonMemo;
     private static Thread jsonMemoThread;
 
     public static void beginJsonMemo() {
         jsonMemo = new HashMap<>();
+        shipJsonMemo = new HashMap<>();
         jsonMemoThread = Thread.currentThread();
     }
 
     public static void endJsonMemo() {
         jsonMemo = null;
+        shipJsonMemo = null;
         jsonMemoThread = null;
+    }
+
+    private static JSONObject unwrap(Object known) throws IOException, JSONException {
+        if (known instanceof IOException) throw (IOException) known;
+        if (known instanceof JSONException) throw (JSONException) known;
+        if (known instanceof RuntimeException) throw (RuntimeException) known;
+        return (JSONObject) known;
     }
 
     private static JSONObject loadJSON(String path) throws IOException, JSONException {
@@ -47,10 +57,7 @@ public class ShipRenderInfo {
             }
             if (memo != null) memo.put(key, known);
         }
-        if (known instanceof IOException) throw (IOException) known;
-        if (known instanceof JSONException) throw (JSONException) known;
-        if (known instanceof RuntimeException) throw (RuntimeException) known;
-        return (JSONObject) known;
+        return unwrap(known);
     }
     public class Slot{
         public Vector2f locationOnShip;
@@ -117,6 +124,21 @@ public class ShipRenderInfo {
     }
 
     private static JSONObject getShipJson(String hullID) throws IOException, JSONException {
+        HashMap<String, Object> memo = jsonMemoThread == Thread.currentThread() ? shipJsonMemo : null;
+        if (memo == null) return resolveShipJson(hullID);
+        Object known = memo.get(hullID);
+        if (known == null) {
+            try {
+                known = resolveShipJson(hullID);
+            } catch (IOException | JSONException | RuntimeException e) {
+                known = e;
+            }
+            memo.put(hullID, known);
+        }
+        return unwrap(known);
+    }
+
+    private static JSONObject resolveShipJson(String hullID) throws IOException, JSONException {
         JSONObject obj;
         try {
             String Filepath = Global.getSettings().getHullSpec(hullID).getShipFilePath();
