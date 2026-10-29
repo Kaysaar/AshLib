@@ -15,17 +15,22 @@ public class ShipRenderInfoRepo {
     public static final Logger log = Global.getLogger(ShipRenderInfoRepo.class);
     public static HashMap<String, ShipRenderInfo>renderInfoRepo  =new HashMap<>();
     public static void populateRenderInfoRepo(){
-        for (ShipHullSpecAPI allShipHullSpec : Global.getSettings().getAllShipHullSpecs()) {
-            populateShip(allShipHullSpec);
-        }
-        for (FighterWingSpecAPI allShipHullSpec : Global.getSettings().getAllFighterWingSpecs()) {
-            try {
-                ShipRenderInfo info = new ShipRenderInfo( allShipHullSpec.getVariant().getHullSpec().getHullId(),true);
-                renderInfoRepo.put(allShipHullSpec.getVariant().getHullSpec().getHullId(),info);
-            }  catch (Exception e) {
-                log.info("Fighter wing id : "+allShipHullSpec.getVariant().getHullSpec().getHullId()+" not loaded!");
+        ShipRenderInfo.beginJsonMemo();
+        try {
+            for (ShipHullSpecAPI allShipHullSpec : Global.getSettings().getAllShipHullSpecs()) {
+                populateShip(allShipHullSpec);
             }
+            for (FighterWingSpecAPI allShipHullSpec : Global.getSettings().getAllFighterWingSpecs()) {
+                try {
+                    ShipRenderInfo info = new ShipRenderInfo( allShipHullSpec.getVariant().getHullSpec().getHullId(),true);
+                    renderInfoRepo.put(allShipHullSpec.getVariant().getHullSpec().getHullId(),info);
+                }  catch (Exception e) {
+                    log.info("Fighter wing id : "+allShipHullSpec.getVariant().getHullSpec().getHullId()+" not loaded!");
+                }
 
+            }
+        } finally {
+            ShipRenderInfo.endJsonMemo();
         }
     }
 

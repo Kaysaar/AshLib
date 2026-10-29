@@ -17,6 +17,48 @@ public class ShipRenderInfo {
     static String format= ".ship";
     static String filepath2 = "data/hulls/skins/";
     static String format2= ".skin";
+
+    private static HashMap<String, Object> jsonMemo;
+    private static HashMap<String, Object> shipJsonMemo;
+    private static Thread jsonMemoThread;
+
+    public static void beginJsonMemo() {
+        jsonMemo = new HashMap<>();
+        shipJsonMemo = new HashMap<>();
+        jsonMemoThread = Thread.currentThread();
+    }
+
+    public static void endJsonMemo() {
+        jsonMemo = null;
+        shipJsonMemo = null;
+        jsonMemoThread = null;
+    }
+
+    private static JSONObject unwrap(Object known) throws IOException, JSONException {
+        if (known instanceof IOException) throw (IOException) known;
+        if (known instanceof JSONException) throw (JSONException) known;
+        if (known instanceof RuntimeException) throw (RuntimeException) known;
+        return (JSONObject) known;
+    }
+
+    private static JSONObject loadJSON(String path) throws IOException, JSONException {
+        return loadJSON(path, null);
+    }
+
+    private static JSONObject loadJSON(String path, Boolean withMods) throws IOException, JSONException {
+        HashMap<String, Object> memo = jsonMemoThread == Thread.currentThread() ? jsonMemo : null;
+        String key = withMods + ":" + path;
+        Object known = memo == null ? null : memo.get(key);
+        if (known == null) {
+            try {
+                known = withMods == null ? Global.getSettings().loadJSON(path) : Global.getSettings().loadJSON(path, withMods);
+            } catch (IOException | JSONException | RuntimeException e) {
+                known = e;
+            }
+            if (memo != null) memo.put(key, known);
+        }
+        return unwrap(known);
+    }
     public class Slot{
         public Vector2f locationOnShip;
         public String id;
@@ -82,17 +124,32 @@ public class ShipRenderInfo {
     }
 
     private static JSONObject getShipJson(String hullID) throws IOException, JSONException {
+        HashMap<String, Object> memo = jsonMemoThread == Thread.currentThread() ? shipJsonMemo : null;
+        if (memo == null) return resolveShipJson(hullID);
+        Object known = memo.get(hullID);
+        if (known == null) {
+            try {
+                known = resolveShipJson(hullID);
+            } catch (IOException | JSONException | RuntimeException e) {
+                known = e;
+            }
+            memo.put(hullID, known);
+        }
+        return unwrap(known);
+    }
+
+    private static JSONObject resolveShipJson(String hullID) throws IOException, JSONException {
         JSONObject obj;
         try {
             String Filepath = Global.getSettings().getHullSpec(hullID).getShipFilePath();
             Filepath = AshMisc.cleanPath(Filepath);
             Filepath =Filepath.replace("\\", "/");
-            obj = Global.getSettings().loadJSON(Filepath);
+            obj = loadJSON(Filepath);
             if(obj.has("width")){
                 obj.getDouble("width");
             }
             else{
-                obj = Global.getSettings().loadJSON(Filepath,false);
+                obj = loadJSON(Filepath,false);
                 obj.getDouble("width");
             }
 
@@ -102,12 +159,12 @@ public class ShipRenderInfo {
             String Filepath = Global.getSettings().getHullSpec(hullID).getShipFilePath();
             Filepath = AshMisc.cleanPath(Filepath);
             Filepath =Filepath.replace("\\", "/");
-            JSONObject obj2 =  Global.getSettings().loadJSON(Filepath);
+            JSONObject obj2 =  loadJSON(Filepath);
             String hullIdProper = obj2.getString("baseHullId");
             Filepath = Global.getSettings().getHullSpec(hullIdProper).getShipFilePath();
             Filepath = AshMisc.cleanPath(Filepath);
             Filepath =Filepath.replace("\\", "/");
-            obj = Global.getSettings().loadJSON(Filepath);
+            obj = loadJSON(Filepath);
 
 
         }
@@ -125,7 +182,7 @@ public class ShipRenderInfo {
     public ArrayList<Slot>built_in_slots;
    public void getModuleSlotsFromVariantFile(String filepath) throws JSONException, IOException {
         String betterFilePath =  filepath.replace("\\", "/");
-       JSONObject object = Global.getSettings().loadJSON(betterFilePath);
+       JSONObject object = loadJSON(betterFilePath);
 
        // Create a HashMap to store the module slots
        HashMap<String, String> moduleSlots = new HashMap<String, String>();
@@ -178,7 +235,7 @@ public class ShipRenderInfo {
            String filepath  = Global.getSettings().getVariant(entry.getValue()).getVariantFilePath();
            filepath = AshMisc.cleanPath(filepath);
            filepath = filepath.replace("\\", "/");
-           JSONObject obj = Global.getSettings().loadJSON(filepath);
+           JSONObject obj = loadJSON(filepath);
            String shipHullId = obj.getString("hullId");
            moduleSlotsShipHulls.put(entry.getKey(),shipHullId);
 
