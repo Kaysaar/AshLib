@@ -19,6 +19,14 @@ public abstract class AshlibBaseEvent {
         return true;
     }
 
+    public boolean shouldFireImmediately() {
+        return false;
+    }
+
+    public float getImmediateEventDelayDays() {
+        return 0f;
+    }
+
     public boolean isMinorEvent() {
         return false;
     }
@@ -99,15 +107,15 @@ public abstract class AshlibBaseEvent {
     }
 
     public float getImageCropY() {
-        return 0f;
+        return 75f;
     }
 
     public float getImageCropWidth() {
-        return getImageSourceWidth();
+        return 480;
     }
 
     public float getImageCropHeight() {
-        return getImageSourceHeight();
+        return 150f;
     }
 
     public float getImageDisplayWidth() {
@@ -115,7 +123,7 @@ public abstract class AshlibBaseEvent {
     }
 
     public float getImageDisplayHeight() {
-        return 300f;
+        return 150F;
     }
 
     public String getConfirmButtonText() {

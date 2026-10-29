@@ -342,6 +342,10 @@ public class InstantPopUpUI implements CustomUIPanelPlugin {
     SpriteAPI bottomLeft= Global.getSettings().getSprite("ui","panel00_bot_left");
     SpriteAPI bottomRight= Global.getSettings().getSprite("ui","panel00_bot_right");
     public static float buttonConfirmWidth = 160;
+    public Color getColorBG(){
+        return panelBackground.getColor();
+    }
+
     UIPanelAPI parent;
     public float frames;
     public CustomPanelAPI panelToInfluence;
@@ -418,7 +422,7 @@ public class InstantPopUpUI implements CustomUIPanelPlugin {
 
             }
             else {
-                renderer.renderTiledTexture(panelToInfluence.getPosition().getX(), panelToInfluence.getPosition().getY(), panelToInfluence.getPosition().getWidth(),  panelToInfluence.getPosition().getHeight(), panelBackground.getTextureWidth(),  panelBackground.getTextureHeight(),(frames/limit),panelBackground.getColor());
+                renderer.renderTiledTexture(panelToInfluence.getPosition().getX(), panelToInfluence.getPosition().getY(), panelToInfluence.getPosition().getWidth(),  panelToInfluence.getPosition().getHeight(), panelBackground.getTextureWidth(),  panelBackground.getTextureHeight(),(frames/limit),getColorBG());
 
             }
             if(isDialog){

@@ -1,24 +1,28 @@
 package ashlib.data.plugins.events;
 
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.EveryFrameScript;
 import com.fs.starfarer.api.campaign.listeners.EconomyTickListener;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Objects;
 
-public class AshlibBaseEventManager implements EconomyTickListener {
+public class AshlibBaseEventManager implements EconomyTickListener, EveryFrameScript {
     private static final Logger log = Global.getLogger(AshlibBaseEventManager.class);
 
     public LinkedHashMap<String, AshlibBaseEvent> events = new LinkedHashMap<>();
 
-    // Existing settings and counters now apply to major events only.
+    // Scheduling settings and limits apply to random major events only.
     public int monthsPassedThisYear = 0;
     public int eventsFiredThisYear = 0;
+    public int immediateEventsFiredThisMonth = 0;
+    public int immediateEventsFiredThisYear = 0;
     public int maxEventsPerYear = 4;
     public float baseMonthlyEventChance = 0.10f;
     public float monthlyEventChanceIncrease = 0.075f;
@@ -38,6 +42,10 @@ public class AshlibBaseEventManager implements EconomyTickListener {
     public transient boolean eventPopupOpen = false;
     public transient Random random;
     private transient AshlibBaseEvent popupEvent;
+    private transient boolean popupEventImmediate;
+    private transient boolean frameScriptRegistered;
+    private LinkedHashMap<String, Long> immediateEventEligibleSince = new LinkedHashMap<>();
+    private LinkedHashSet<String> requestedImmediateEvents = new LinkedHashSet<>();
 
     private LinkedHashMap<String, MinorEventTrigger> minorEventTriggers = new LinkedHashMap<>();
     public int triggeredMinorEventsFiredThisMonth;
@@ -87,14 +95,25 @@ public class AshlibBaseEventManager implements EconomyTickListener {
             // Keep scheduling counters and event cooldowns when the campaign is saved.
             Global.getSector().getListenerManager().addListener(new AshlibBaseEventManager(), false);
         }
-        return Global.getSector().getListenerManager()
+        AshlibBaseEventManager manager = Global.getSector().getListenerManager()
                 .getListeners(AshlibBaseEventManager.class).iterator().next();
+        if (!manager.frameScriptRegistered) {
+            Global.getSector().addTransientScript(manager);
+            manager.frameScriptRegistered = true;
+        }
+        return manager;
     }
 
     protected Object readResolve() {
         if (events == null) events = new LinkedHashMap<>();
+        if (immediateEventEligibleSince == null) immediateEventEligibleSince = new LinkedHashMap<>();
+        if (requestedImmediateEvents == null) requestedImmediateEvents = new LinkedHashSet<>();
+        immediateEventEligibleSince.keySet().retainAll(events.keySet());
+        requestedImmediateEvents.retainAll(events.keySet());
         eventPopupOpen = false;
+        frameScriptRegistered = false;
         popupEvent = null;
+        popupEventImmediate = false;
         random = null;
         for (AshlibBaseEvent event : events.values()) {
             event.clearTarget();
@@ -136,6 +155,67 @@ public class AshlibBaseEventManager implements EconomyTickListener {
         AshlibBaseEvent event = events.get(eventId);
         if (event != null && event == popupEvent) return;
         events.remove(eventId);
+        immediateEventEligibleSince.remove(eventId);
+        requestedImmediateEvents.remove(eventId);
+    }
+
+    @Override
+    public boolean isDone() {
+        return false;
+    }
+
+    @Override
+    public boolean runWhilePaused() {
+        return false;
+    }
+
+    @Override
+    public void advance(float amount) {
+        if (Global.getSector() == null || Global.getSector().isPaused()) return;
+        float days = Global.getSector().getClock().convertToDays(amount);
+        for (AshlibBaseEvent event : new ArrayList<>(events.values())) {
+            if (!event.isMinorEvent() && event.shouldFireImmediately()) {
+                event.advanceDays(days);
+            }
+        }
+        checkImmediateMajorEvents();
+    }
+
+    public boolean checkImmediateMajorEvents() {
+        boolean opened = false;
+        for (AshlibBaseEvent event : new ArrayList<>(events.values())) {
+            String id = event.getUniqueEventTypeID();
+            try {
+                if (event == popupEvent) continue;
+                boolean automatic = event.isAutomaticallyScheduled() && event.shouldFireImmediately();
+                if (event.isMinorEvent() || (!automatic && !requestedImmediateEvents.contains(id))) {
+                    immediateEventEligibleSince.remove(id);
+                    continue;
+                }
+                if (activateEvent(event, true)) opened = true;
+            } catch (Exception ex) {
+                immediateEventEligibleSince.remove(id);
+                log.error("Failed checking immediate event " + id, ex);
+            }
+        }
+        return opened;
+    }
+
+    private boolean isImmediateEventReady(AshlibBaseEvent event) {
+        String id = event.getUniqueEventTypeID();
+        if (!event.didEventMetBaseCriteria() || !event.canEvenFireEvent()) {
+            immediateEventEligibleSince.remove(id);
+            if (event.reachedMaximumAmount()) requestedImmediateEvents.remove(id);
+            return false;
+        }
+        float delay = Math.max(0f, event.getImmediateEventDelayDays());
+        if (delay == 0f) return true;
+        Long since = immediateEventEligibleSince.get(id);
+        if (since == null) {
+            since = Global.getSector().getClock().getTimestamp();
+            immediateEventEligibleSince.put(id, since);
+        }
+        return Global.getSector().getClock().getElapsedDaysSince(since) >= delay;
     }
 
     @Override
@@ -144,7 +224,7 @@ public class AshlibBaseEventManager implements EconomyTickListener {
 
         float days = Global.getSettings().getFloat("economyIntervalnGameDays");
         for (AshlibBaseEvent event : new ArrayList<>(events.values())) {
-            event.advanceDays(days);
+            if (event.isMinorEvent() || !event.shouldFireImmediately()) event.advanceDays(days);
         }
 
         boolean forcedMinorFired = false;
@@ -180,10 +260,12 @@ public class AshlibBaseEventManager implements EconomyTickListener {
     public void reportEconomyMonthEnd() {
         minorEventsFiredThisMonth = 0;
         triggeredMinorEventsFiredThisMonth = 0;
+        immediateEventsFiredThisMonth = 0;
         monthsPassedThisYear++;
         if (monthsPassedThisYear >= 12) {
             monthsPassedThisYear = 0;
             eventsFiredThisYear = 0;
+            immediateEventsFiredThisYear = 0;
             minorEventsFiredThisYear = 0;
             triggeredMinorEventsFiredThisYear = 0;
         }
@@ -221,6 +303,7 @@ public class AshlibBaseEventManager implements EconomyTickListener {
         for (AshlibBaseEvent event : new ArrayList<>(events.values())) {
             try {
                 if (!event.isAutomaticallyScheduled()) continue;
+                if (!event.isMinorEvent() && (event.shouldFireImmediately() || requestedImmediateEvents.contains(event.getUniqueEventTypeID()))) continue;
                 if (minor != null && event.isMinorEvent() != minor) continue;
                 if (!Objects.equals(triggerId, event.getMinorEventTrigger())) continue;
                 if (event.didEventMetBaseCriteria() && event.canEvenFireEvent()) valid.add(event);
@@ -239,49 +322,50 @@ public class AshlibBaseEventManager implements EconomyTickListener {
         }
     }
 
-    /**
-     * Opens a registered major event now, without waiting for an economy tick.
-     * Bypasses scheduling rolls and caps, but preserves eligibility, cooldowns,
-     * firing limits, configuration checks, and normal popup confirmation.
-     * Call on the campaign thread, after economy workers have finished.
-     * Returns true when the popup opens; false means nothing was queued.
-     */
+
     public boolean fireMajorEventImmediately(String eventId) {
         AshlibBaseEvent event = events.get(eventId);
         if (event == null || event.isMinorEvent()) return false;
-        return activateEvent(eventId);
+        requestedImmediateEvents.add(eventId);
+        return activateEvent(event, true);
     }
 
     // Manual/dev activation bypasses schedule chances and caps, but still counts a successful firing.
     public boolean activateEvent(String eventId) {
-        AshlibBaseEvent event = events.get(eventId);
-        if (event == null) return false;
-        try {
-            if (!event.didEventMetBaseCriteria() || !event.canEvenFireEvent()) return false;
-            return activateEvent(event);
-        } catch (Exception ex) {
-            log.error("Failed checking event " + eventId, ex);
-            return false;
-        }
+        return activateEvent(events.get(eventId));
     }
 
     protected boolean activateEvent(AshlibBaseEvent event) {
+        if (event == null) return false;
+        return activateEvent(event, !event.isMinorEvent() && (event.shouldFireImmediately() || requestedImmediateEvents.contains(event.getUniqueEventTypeID())));
+    }
+
+    protected boolean activateEvent(AshlibBaseEvent event, boolean immediate) {
+        if (event == null) return false;
         boolean minor = event.isMinorEvent();
-        if (!minor && (eventPopupOpen || !canOpenEvent())) return false;
-        event.clearTarget();
+        if (event == popupEvent) return false;
 
         try {
+            if (immediate && !minor) {
+                if (!isImmediateEventReady(event)) return false;
+            } else if (!event.didEventMetBaseCriteria() || !event.canEvenFireEvent()) {
+                return false;
+            }
+            if (!minor && (eventPopupOpen || !canOpenEvent())) return false;
+            event.clearTarget();
             event.configureEventBeforeFiringUp();
             if (!event.canFireAfterConfiguration()) {
+                immediateEventEligibleSince.remove(event.getUniqueEventTypeID());
                 event.clearTarget();
                 return false;
             }
 
             if (minor) {
-                completeEvent(event);
+                completeEvent(event, false);
                 event.clearTarget();
             } else {
                 popupEvent = event;
+                popupEventImmediate = immediate;
                 eventPopupOpen = true;
                 new AshlibBaseEventPopUp(event).show();
             }
@@ -289,9 +373,11 @@ public class AshlibBaseEventManager implements EconomyTickListener {
         } catch (Exception ex) {
             if (popupEvent == event) {
                 popupEvent = null;
+                popupEventImmediate = false;
                 eventPopupOpen = false;
             }
             event.clearTarget();
+            immediateEventEligibleSince.remove(event.getUniqueEventTypeID());
             log.error("Failed activating event " + event.getUniqueEventTypeID(), ex);
             return false;
         }
@@ -301,17 +387,22 @@ public class AshlibBaseEventManager implements EconomyTickListener {
         // Ignore stale buttons and repeated confirmation. Minor events never use this path.
         if (event == null || event != popupEvent || !eventPopupOpen) return;
         try {
-            if (event.canFireAfterConfiguration()) completeEvent(event);
+            if (event.canFireAfterConfiguration()) {
+                completeEvent(event, popupEventImmediate);
+            } else {
+                immediateEventEligibleSince.remove(event.getUniqueEventTypeID());
+            }
         } catch (Exception ex) {
             log.error("Failed confirming event " + event.getUniqueEventTypeID(), ex);
         } finally {
             event.clearTarget();
             popupEvent = null;
+            popupEventImmediate = false;
             eventPopupOpen = false;
         }
     }
 
-    private void completeEvent(AshlibBaseEvent event) {
+    private void completeEvent(AshlibBaseEvent event, boolean immediate) {
         // Snapshot the occurrence while its target still exists. Do not store the reusable event.
         AshlibBaseEventIntel intel = event.createIntelPlugin();
         if (intel == null) {
@@ -320,12 +411,17 @@ public class AshlibBaseEventManager implements EconomyTickListener {
 
         event.executeEvent(intel);
         event.markAsFired();
+        immediateEventEligibleSince.remove(event.getUniqueEventTypeID());
+        requestedImmediateEvents.remove(event.getUniqueEventTypeID());
         if (event.isMinorEvent() && event.getMinorEventTrigger() != null) {
             triggeredMinorEventsFiredThisMonth++;
             triggeredMinorEventsFiredThisYear++;
         } else if (event.isMinorEvent()) {
             minorEventsFiredThisMonth++;
             minorEventsFiredThisYear++;
+        } else if (immediate) {
+            immediateEventsFiredThisMonth++;
+            immediateEventsFiredThisYear++;
         } else {
             eventsFiredThisYear++;
             eventCanFireThisMonth = false;
