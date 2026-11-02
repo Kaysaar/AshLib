@@ -287,6 +287,25 @@ public class MapMainComponent implements ExtendedUIPanelPlugin {
         }
         for (CustomCampaignEntityAPI token : system.getCustomEntities()) {
             if (token.getCustomEntitySpec().getId().equals(Entities.WRECK)) continue;
+            if (token.hasTag(CustomEntityIconComponent.SHOW_ONLY_ICON_ON_MAP)) {
+                CustomEntityIconComponent comp = new CustomEntityIconComponent(token);
+                comp.scale = mapZoom.currScale;
+                addTooltipTo(comp, new MapTooltipComponent() {
+                    @Override
+                    public void createTooltip(TooltipMakerAPI tooltip, boolean expanded, Object tooltipParam) {
+                        if (token.getCustomPlugin() != null && token.getCustomPlugin().hasCustomMapTooltip()) {
+                            token.getCustomPlugin().createMapTooltip(tooltip, expanded);
+                        } else if (token.getFaction() != null) {
+                            tooltip.addPara(token.getName(), token.getFaction().getBaseUIColor(), 2f);
+                        } else {
+                            tooltip.addPara(token.getName(), Misc.getGrayColor(), 2f);
+                        }
+                    }
+                }, TooltipMakerAPI.TooltipLocation.RIGHT, false);
+                Vector2f ui = translateCoordinatesToUI(token.getLocation());
+                mapZoom.addComponent(comp, ui.x - (JumpPointRenderer.size / 2), ui.y - (JumpPointRenderer.size / 2));
+                continue;
+            }
             if (token.hasSensorProfile()) continue;
             // Stable location
             if((token.getCustomPlugin() instanceof SupplyCacheEntityPlugin)||(token.getCustomPlugin() instanceof CargoPodsRendererPlugin)){
