@@ -34,6 +34,28 @@ public class AshlibBaseEventIntel extends BaseIntelPlugin {
         setPlayerVisibleTimestamp(occurredAt);
     }
 
+    // Ordinary AshLib bulletins are temporary reports. Event-specific intel
+    // subclasses remain persistent unless they opt into an expiration period.
+    public static float defaultReportLifetimeDays = 90f;
+    private Float expirationDays;
+
+    public void setExpirationDays(float days) {
+        expirationDays = days;
+    }
+
+    protected float getExpirationDays() {
+        if (expirationDays != null) return expirationDays;
+        return getClass() == AshlibBaseEventIntel.class ? defaultReportLifetimeDays : -1f;
+    }
+
+    @Override
+    public boolean shouldRemoveIntel() {
+        if (super.shouldRemoveIntel()) return true;
+        float days = getExpirationDays();
+        return days >= 0f && Global.getSector() != null
+                && Global.getSector().getClock().getElapsedDaysSince(occurredAt) >= days;
+    }
+
     public String getOccurrenceId() {
         return occurrenceId;
     }

@@ -63,10 +63,10 @@ public class AshlibBaseEventPopUp extends BasePopUpDialog {
                     5f
             );
         }
-        CustomPanelAPI container2 = Global.getSettings().createCustom(width,heightV-210,null);
+        CustomPanelAPI container2 = Global.getSettings().createCustom(width-11,heightV-210,null);
         TooltipMakerAPI tl = container2.createUIElement(container2.getPosition().getWidth(),container2.getPosition().getHeight(),true);
         event.createTooltipForEvent(tl);
-        container2.addUIElement(tl).inTL(-5,0);
+        container2.addUIElement(tl).inTL(-2,0);
         tooltip.addCustom(container2,5f);
 
     }
