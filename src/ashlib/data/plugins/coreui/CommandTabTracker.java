@@ -9,7 +9,6 @@ import com.fs.starfarer.api.campaign.CampaignUIAPI;
 import com.fs.starfarer.api.campaign.CoreUIAPI;
 import com.fs.starfarer.api.campaign.CoreUITabId;
 import com.fs.starfarer.api.ui.*;
-import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.util.Pair;
 import com.fs.starfarer.campaign.CampaignState;
 import com.fs.state.AppDriver;
@@ -19,6 +18,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.*;
+import java.util.stream.IntStream;
 
 
 public class CommandTabTracker implements EveryFrameScript {
@@ -407,49 +407,17 @@ public class CommandTabTracker implements EveryFrameScript {
                 return Integer.compare(o1.getOrder(), o2.getOrder());
             }
         }).toList();
-        LinkedHashMap<String, String> vanillaButtonsOriginal = new LinkedHashMap<>();
-        vanillaButtonsOriginal.put("colonies", "colonies");
-        vanillaButtonsOriginal.put("orders", "orders");
-        vanillaButtonsOriginal.put("income", "income");
-        vanillaButtonsOriginal.put("doctrine & blueprints", "doctrine & blueprints");
-        vanillaButtonsOriginal.put("custom production", "custom production");
-        float xS = 0;
-        for (String string : vanillaButtonsOriginal.keySet()) {
-            ButtonAPI bu = tryToGetButtonProd(string);
-            if (bu != null) {
-                tryToGetButtonProd(string).getPosition().inTL(xS, 0);
-                xS += tryToGetButtonProd(string).getPosition().getWidth() + 1;
-            } else {
-                break;
-            }
 
+        // Logical buttons row model: initially vanilla buttons, then listeners mark some of them deleted, replacing with listener-created ones
+        List<CommandTabItem> items = new ArrayList<>();
+        for (String vanilla : VANILLA_BUTTONS) {
+            items.add(new CommandTabItem(vanilla, false, null));
         }
         for (CommandTabListener listener : listeners) {
-            if (tryToGetButtonProd(listener.getNameForTab().toLowerCase()) == null) {
-                if (listener.getButtonToReplace() != null) {
-                    if (listener.getButtonToBePlacedNear() == null) {
-                        ButtonAPI x = tryToGetButtonProd(listener.getButtonToReplace().toLowerCase());
-                        insertButton(x.getPosition().getX(), x.getPosition().getY(), x.getPosition().getHeight(), mainParent, listener.getNameForTab(), listener.getTooltipCreatorForButton(), listener.getWidthOfButton(), listener.getKeyBind(), !listener.shouldButtonBeEnabled());
-                        mainParent.removeComponent(x);
-                        vanillaButtonsOriginal.put(listener.getButtonToReplace().toLowerCase(), listener.getNameForTab().toLowerCase());
-                    } else {
-                        mainParent.removeComponent(tryToGetButtonProd(vanillaButtonsOriginal.get(listener.getButtonToReplace().toLowerCase())));
-                        vanillaButtonsOriginal.put(listener.getButtonToReplace().toLowerCase(), listener.getNameForTab().toLowerCase());
-                    }
-
-                }
-                if (listener.getButtonToBePlacedNear() != null) {
-                    String vanilla = vanillaButtonsOriginal.get(listener.getButtonToBePlacedNear());
-                    if (vanilla != null) {
-                        vanilla = vanilla.toLowerCase();
-                    } else {
-                        vanilla = listener.getButtonToBePlacedNear();
-                    }
-                    insertButton(tryToGetButtonProd(vanilla), mainParent, listener.getNameForTab(), listener.getTooltipCreatorForButton(), tryToGetButtonProd(vanillaButtonsOriginal.get("colonies")), listener.getWidthOfButton(), listener.getKeyBind(), !listener.shouldButtonBeEnabled());
-                }
-
-            }
+            applyListener(items, listener);
         }
+
+        applyTabButtonsLayout(mainParent, items);
 
         float y = button.getPosition().getY();
         float x = button.getPosition().getX();
@@ -711,20 +679,100 @@ public class CommandTabTracker implements EveryFrameScript {
 
     }
 
-    private void insertButton(ButtonAPI buttonOfReference, UIPanelAPI mainParent, String name, TooltipMakerAPI.TooltipCreator creator, ButtonAPI referenceButton, float size, int keyBind, boolean dissabled) {
-        LabelAPI label = Global.getSettings().createLabel(name, "graphics/fonts/orbitron12condensed.fnt");
-        ButtonAPI newButton = createPanelButton(name,size, buttonOfReference.getPosition().getHeight(), keyBind, dissabled, creator).two;
+    private static final List<String> VANILLA_BUTTONS = List.of("colonies", "orders", "income", "doctrine & blueprints", "custom production");
 
-        mainParent.addComponent(newButton).inTL(buttonOfReference.getPosition().getX() + buttonOfReference.getPosition().getWidth() - referenceButton.getPosition().getX() + 1, 0);
-        mainParent.bringComponentToTop(newButton);
+    /**
+     * Logical tab buttons row entry: a vanilla button (possibly deleted) or a button created by listener
+     */
+    private record CommandTabItem(String buttonKey, boolean isDeleted, CommandTabListener listener) {}
+
+    private int findCommandTabItem(List<CommandTabItem> items, String key) {
+        return IntStream.range(0, items.size())
+                .filter(i -> items.get(i).buttonKey().equalsIgnoreCase(key))
+                .findFirst()
+                .orElse(-1);
     }
 
-    private void insertButton(float x, float y, float height, UIPanelAPI mainParent, String name, TooltipMakerAPI.TooltipCreator creator, float size, int keyBind, boolean dissabled) {
-        LabelAPI label = Global.getSettings().createLabel(name, "graphics/fonts/orbitron12condensed.fnt");
-        ButtonAPI newButton = createPanelButton(name, size, height, keyBind, dissabled, creator).two;
+    private void applyListener(List<CommandTabItem> items, CommandTabListener listener) {
+        String name = listener.getNameForTab();
+        if (name == null) {
+            Global.getLogger(CommandTabTracker.class).warn("CommandTabListener with null name skipped");
+            return;
+        }
+        if (items.stream().anyMatch(item -> item.buttonKey().equalsIgnoreCase(name))) {
+            return; // duplicate listener name, keep the first
+        }
 
-        mainParent.addComponent(newButton).inTL(x - mainParent.getPosition().getX(), 0);
-        mainParent.bringComponentToTop(newButton);
+        int anchorIndex = -1;
+        String replace = listener.getButtonToReplace();
+
+        if (replace != null) {
+            int replaceIndex = findCommandTabItem(items, replace);
+            if (replaceIndex >= 0) {
+                CommandTabItem original = items.get(replaceIndex);
+                items.set(replaceIndex, new CommandTabItem(original.buttonKey(), true, original.listener()));
+                anchorIndex = replaceIndex;
+            } else {
+                Global.getLogger(CommandTabTracker.class).warn("Replace target not found: " + replace);
+            }
+        }
+        String near = listener.getButtonToBePlacedNear();
+        if (near != null) {
+            int nearIndex = findCommandTabItem(items, near);
+            if (nearIndex >= 0) {
+                anchorIndex = nearIndex;
+            }
+        }
+        if (anchorIndex < 0) {
+            anchorIndex = items.size() - 1;
+        }
+        items.add(anchorIndex + 1, new CommandTabItem(name, false, listener));
+    }
+
+    private void applyTabButtonsLayout(UIPanelAPI mainParent, List<CommandTabItem> items) {
+        // bringComponentToTop will fail with "May only anchor on siblings" due to its internal revalidation logic, so we clear all anchors first
+        for (CommandTabItem item : items) {
+            ButtonAPI button = tryToGetButtonProd(item.buttonKey());
+            if (button != null) {
+                button.getPosition().inTL(button.getPosition().getX() - mainParent.getPosition().getX(), 0);
+            }
+        }
+
+        float x = 0;
+        float refHeight = 0;
+        for (CommandTabItem item : items) {
+            ButtonAPI button = tryToGetButtonProd(item.buttonKey());
+            if (button != null && refHeight <= 0) {
+                refHeight = button.getPosition().getHeight();
+            }
+            if (item.isDeleted()) {
+                if (button != null) {
+                    mainParent.removeComponent(button);
+                }
+                continue;
+            }
+            if (button == null && item.listener() != null) {
+                if (refHeight <= 0) {
+                    Global.getLogger(CommandTabTracker.class).warn("No reference height for command tab button: " + item.buttonKey());
+                    continue;
+                }
+                CommandTabListener listener = item.listener();
+                button = createPanelButton(listener.getNameForTab(),
+                        listener.getWidthOfButton(),
+                        refHeight,
+                        listener.getKeyBind(),
+                        !listener.shouldButtonBeEnabled(),
+                        listener.getTooltipCreatorForButton()).two;
+                mainParent.addComponent(button);
+                mainParent.bringComponentToTop(button);
+            }
+            if (button == null) {
+                Global.getLogger(CommandTabTracker.class).warn("Command tab button not found: " + item.buttonKey());
+                continue;
+            }
+            button.getPosition().inTL(x, 0);
+            x += button.getPosition().getWidth() + 1;
+        }
     }
 
     private Pair<CustomPanelAPI, ButtonAPI> createPanelButton(String buttonName, float width, float height, int bindingValue, boolean dissabled, TooltipMakerAPI.TooltipCreator onHoverTooltip) {
